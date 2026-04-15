@@ -1,0 +1,623 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Ka'ana — Choose Your Experience</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700;900&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg:        #ede8de;
+      --surface:   #ffffff;
+      --accent:    #b8705a;
+      --accent-dk: #9a5c48;
+      --text:      #1a1510;
+      --muted:     #6b5e52;
+      --border:    #1a1510;
+      --shadow:    4px 4px 0 #1a1510;
+      --shadow-sm: 2px 2px 0 #1a1510;
+      --font:      'DM Sans', system-ui, sans-serif;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      min-height: 100vh;
+      background: var(--bg);
+      font-family: var(--font);
+      color: var(--text);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 32px 20px;
+    }
+
+    /* ── HEADER ── */
+    .logo {
+      font-size: 13px;
+      font-weight: 900;
+      letter-spacing: 0.25em;
+      text-transform: uppercase;
+      padding: 8px 20px;
+      border: 2px solid var(--border);
+      margin-bottom: 48px;
+    }
+
+    .headline {
+      font-size: clamp(22px, 5vw, 36px);
+      font-weight: 900;
+      text-transform: uppercase;
+      letter-spacing: -0.02em;
+      text-align: center;
+      line-height: 1.05;
+      margin-bottom: 10px;
+    }
+
+    .subheadline {
+      font-size: 14px;
+      color: var(--muted);
+      font-weight: 500;
+      text-align: center;
+      margin-bottom: 48px;
+      line-height: 1.5;
+    }
+
+    /* ── VERSION CARDS ── */
+    .versions {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 20px;
+      width: 100%;
+      max-width: 680px;
+    }
+
+    @media (min-width: 600px) {
+      .versions { grid-template-columns: 1fr 1fr; }
+    }
+    @media (min-width: 900px) {
+      .versions { grid-template-columns: 1fr 1fr; max-width: 880px; }
+    }
+
+    .version-card {
+      background: var(--surface);
+      border: 2px solid var(--border);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+      cursor: pointer;
+      text-decoration: none;
+      color: inherit;
+      display: flex;
+      flex-direction: column;
+      transition: transform 0.12s, box-shadow 0.12s;
+    }
+
+    .version-card:hover {
+      transform: translate(-3px, -3px);
+      box-shadow: 7px 7px 0 #1a1510;
+    }
+
+    .version-card:active {
+      transform: translate(2px, 2px);
+      box-shadow: 2px 2px 0 #1a1510;
+    }
+
+    /* Coloured header stripe */
+    .card-stripe {
+      height: 6px;
+    }
+    .stripe-v1 { background: var(--accent); }
+    .stripe-v2 { background: #1a1510; }
+    .stripe-v3 { background: linear-gradient(90deg, #2d1f15, #b8705a); }
+    .stripe-v4 { background: linear-gradient(90deg, #335c67, #e09f3e); }
+    .stripe-v5 { background: linear-gradient(90deg, #1f7a8c, #f2a65a); }
+
+    .card-body { padding: 24px 24px 20px; flex: 1; }
+
+    .version-tag {
+      display: inline-block;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      padding: 3px 9px;
+      border: 1.5px solid var(--border);
+      margin-bottom: 14px;
+    }
+    .tag-v1 { color: var(--accent); border-color: var(--accent); }
+    .tag-v2 { color: var(--text); }
+    .tag-v3 { color: #b8705a; border-color: #b8705a; }
+    .tag-v4 { color: #335c67; border-color: #335c67; }
+    .tag-v5 { color: #1f7a8c; border-color: #1f7a8c; }
+
+    .card-name {
+      font-size: 22px;
+      font-weight: 900;
+      text-transform: uppercase;
+      letter-spacing: -0.01em;
+      line-height: 1.1;
+      margin-bottom: 6px;
+    }
+
+    .card-tagline {
+      font-size: 13px;
+      color: var(--muted);
+      font-weight: 500;
+      margin-bottom: 20px;
+      line-height: 1.5;
+    }
+
+    /* Mechanic pills */
+    .mechanic-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin-bottom: 24px;
+    }
+
+    .mechanic-row {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+    }
+
+    .mechanic-icon {
+      font-size: 16px;
+      flex-shrink: 0;
+      margin-top: 1px;
+    }
+
+    .mechanic-text {
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--text);
+      line-height: 1.4;
+    }
+
+    .mechanic-text strong {
+      font-weight: 700;
+    }
+
+    /* Stats row */
+    .card-stats {
+      display: flex;
+      gap: 16px;
+      padding-top: 16px;
+      border-top: 1.5px solid rgba(26,21,16,0.12);
+    }
+
+    .stat {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .stat-val {
+      font-size: 18px;
+      font-weight: 900;
+      letter-spacing: -0.01em;
+    }
+
+    .stat-label {
+      font-size: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--muted);
+    }
+
+    /* CTA footer */
+    .card-footer {
+      border-top: 2px solid var(--border);
+      padding: 14px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: var(--bg);
+    }
+
+    .card-footer-label {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--muted);
+    }
+
+    .card-cta {
+      font-size: 12px;
+      font-weight: 900;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--accent);
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    /* ── PREVIEW STRIP ── */
+    .preview-strip {
+      height: 56px;
+      border-top: 1.5px solid rgba(26,21,16,0.1);
+      display: flex;
+      align-items: center;
+      padding: 0 24px;
+      gap: 8px;
+      overflow: hidden;
+    }
+
+    .preview-item {
+      font-size: 20px;
+      opacity: 0.85;
+    }
+
+    .preview-vs {
+      font-size: 9px;
+      font-weight: 900;
+      letter-spacing: 0.1em;
+      color: var(--muted);
+      padding: 2px 6px;
+      border: 1px solid var(--muted);
+    }
+
+    /* ── BOTTOM NOTE ── */
+    .bottom-note {
+      margin-top: 40px;
+      font-size: 12px;
+      color: var(--muted);
+      font-weight: 500;
+      text-align: center;
+      line-height: 1.6;
+    }
+
+    .bottom-note a {
+      color: var(--accent);
+      font-weight: 700;
+      text-decoration: none;
+    }
+
+    /* ── RESEARCH BADGE ── */
+    .research-badge {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 16px;
+      border: 1.5px solid rgba(26,21,16,0.2);
+      margin-top: 24px;
+      max-width: 680px;
+      width: 100%;
+    }
+
+    .research-badge-icon { font-size: 16px; }
+
+    .research-badge-text {
+      font-size: 11px;
+      color: var(--muted);
+      font-weight: 500;
+      line-height: 1.4;
+    }
+
+    .research-badge-text strong {
+      color: var(--text);
+      font-weight: 700;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="logo">KA'ANA</div>
+
+  <h1 class="headline">How would you like to<br/>build your Taste ID?</h1>
+  <p class="subheadline">Five different methods, same outcome. Pick whichever feels right.</p>
+
+  <div class="versions">
+
+    <!-- ── VERSION 3 ── -->
+    <a class="version-card" href="/onboarding_v3.html">
+      <div class="card-stripe stripe-v3"></div>
+
+      <div class="preview-strip" style="background: linear-gradient(135deg,#1a1510,#2d1f15,#4a2820);">
+        <span class="preview-item">🌆</span>
+        <span class="preview-item">🌙</span>
+        <span class="preview-item">📱</span>
+        <span class="preview-item">⏱️</span>
+        <span class="preview-item">🍽️</span>
+        <span class="preview-item">🧾</span>
+      </div>
+
+      <div class="card-body">
+        <span class="version-tag tag-v3">Version 3</span>
+        <div class="card-name">The<br/>Evening</div>
+        <p class="card-tagline">A short story about dinner. Six cinematic moments — you make the decisions. Your choices reveal your food archetype.</p>
+
+        <div class="mechanic-list">
+          <div class="mechanic-row">
+            <span class="mechanic-icon">📖</span>
+            <span class="mechanic-text"><strong>6 story chapters</strong> — immersive scenes from "work ends" to "the bill arrives."</span>
+          </div>
+          <div class="mechanic-row">
+            <span class="mechanic-icon">🧭</span>
+            <span class="mechanic-text"><strong>7 food archetypes</strong> — Explorer, Connoisseur, Social Feaster, and more.</span>
+          </div>
+          <div class="mechanic-row">
+            <span class="mechanic-icon">🎬</span>
+            <span class="mechanic-text"><strong>Visual journey</strong> — atmospheric gradients and cinematic transitions between scenes.</span>
+          </div>
+        </div>
+
+        <div class="card-stats">
+          <div class="stat">
+            <span class="stat-val">~90 sec</span>
+            <span class="stat-label">Duration</span>
+          </div>
+          <div class="stat">
+            <span class="stat-val">6</span>
+            <span class="stat-label">Story chapters</span>
+          </div>
+          <div class="stat">
+            <span class="stat-val">8</span>
+            <span class="stat-label">Taste dimensions</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="card-footer">
+        <span class="card-footer-label">Scenario narrative</span>
+        <span class="card-cta">Try This →</span>
+      </div>
+    </a>
+
+    <!-- ── VERSION 4 ── -->
+    <a class="version-card" href="/onboarding_v4.html">
+      <div class="card-stripe stripe-v4"></div>
+
+      <div class="preview-strip" style="background: linear-gradient(135deg,#2d1b14,#4a2a1f,#6a3b2b);">
+        <span class="preview-item">🍽️</span>
+        <span class="preview-item">🍛</span>
+        <span class="preview-item">🐟</span>
+        <span class="preview-item">🥗</span>
+        <span class="preview-item">🌶️</span>
+        <span class="preview-item">🍷</span>
+        <span class="preview-item">💰</span>
+        <span class="preview-item">🌺</span>
+      </div>
+
+      <div class="card-body">
+        <span class="version-tag tag-v4">Version 4 — New</span>
+        <div class="card-name">Layered Meal<br/>Builder</div>
+        <p class="card-tagline">Build one coherent dish-and-scene composition layer by layer: base, topping, flavor, atmosphere, social context, budget, and finish.</p>
+
+        <div class="mechanic-list">
+          <div class="mechanic-row">
+            <span class="mechanic-icon">🧩</span>
+            <span class="mechanic-text"><strong>Layered composition</strong> — each round updates the same live visual scene instead of resetting.</span>
+          </div>
+          <div class="mechanic-row">
+            <span class="mechanic-icon">🧠</span>
+            <span class="mechanic-text"><strong>Behavioral signal</strong> — speed and hesitation affect confidence weighting on each layer.</span>
+          </div>
+          <div class="mechanic-row">
+            <span class="mechanic-icon">🧬</span>
+            <span class="mechanic-text"><strong>Same backend contract</strong> — still maps to your exact 8-dimension Taste ID and `/recommend` flow.</span>
+          </div>
+        </div>
+
+        <div class="card-stats">
+          <div class="stat">
+            <span class="stat-val">~80 sec</span>
+            <span class="stat-label">Duration</span>
+          </div>
+          <div class="stat">
+            <span class="stat-val">7</span>
+            <span class="stat-label">Layer steps</span>
+          </div>
+          <div class="stat">
+            <span class="stat-val">8</span>
+            <span class="stat-label">Taste dimensions</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="card-footer">
+        <span class="card-footer-label">Gamified meal building</span>
+        <span class="card-cta">Try This →</span>
+      </div>
+    </a>
+
+    <!-- ── VERSION 5 ── -->
+    <a class="version-card" href="/onboarding_v5.html">
+      <div class="card-stripe stripe-v5"></div>
+
+      <div class="preview-strip" style="background: linear-gradient(135deg,#13323a,#1f5866,#2a7385);">
+        <span class="preview-item">🗺️</span>
+        <span class="preview-item">🌺</span>
+        <span class="preview-item">🌊</span>
+        <span class="preview-item">🌋</span>
+        <span class="preview-item">⛽</span>
+        <span class="preview-item">⏱️</span>
+        <span class="preview-item">🍽️</span>
+        <span class="preview-item">🎯</span>
+      </div>
+
+      <div class="card-body">
+        <span class="version-tag tag-v5">Version 5 — New</span>
+        <div class="card-name">Island Route<br/>Runner</div>
+        <p class="card-tagline">Plan your dinner path across island tradeoffs with limited fuel and time. Dynamic events force strategic reroutes that reveal your real priorities.</p>
+
+        <div class="mechanic-list">
+          <div class="mechanic-row">
+            <span class="mechanic-icon">🗺️</span>
+            <span class="mechanic-text"><strong>Route planning game</strong> — make six high-impact route decisions under constraints.</span>
+          </div>
+          <div class="mechanic-row">
+            <span class="mechanic-icon">⚡</span>
+            <span class="mechanic-text"><strong>Live events</strong> — storms, traffic, and group changes alter the optimal path each turn.</span>
+          </div>
+          <div class="mechanic-row">
+            <span class="mechanic-icon">🧬</span>
+            <span class="mechanic-text"><strong>Same backend contract</strong> — strategy outcomes still map to your 8-dimension Taste ID and `/recommend` flow.</span>
+          </div>
+        </div>
+
+        <div class="card-stats">
+          <div class="stat">
+            <span class="stat-val">~90 sec</span>
+            <span class="stat-label">Duration</span>
+          </div>
+          <div class="stat">
+            <span class="stat-val">6</span>
+            <span class="stat-label">Route turns</span>
+          </div>
+          <div class="stat">
+            <span class="stat-val">100</span>
+            <span class="stat-label">Fuel credits</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="card-footer">
+        <span class="card-footer-label">Strategic simulation</span>
+        <span class="card-cta">Try This →</span>
+      </div>
+    </a>
+
+    <!-- ── VERSION 1 ── -->
+    <a class="version-card" href="/onboarding.html">
+      <div class="card-stripe stripe-v1"></div>
+
+      <!-- Preview strip of dish emojis -->
+      <div class="preview-strip" style="background: linear-gradient(135deg,#f0d9d0,#ede8de);">
+        <span class="preview-item">🍖</span>
+        <span class="preview-item">🫐</span>
+        <span class="preview-item">🍛</span>
+        <span class="preview-item">🍔</span>
+        <span class="preview-item">🐟</span>
+        <span class="preview-item">🐠</span>
+        <span class="preview-item">🔥</span>
+        <span class="preview-item">🍜</span>
+        <span class="preview-item">🦪</span>
+        <span class="preview-item">🍕</span>
+      </div>
+
+      <div class="card-body">
+        <span class="version-tag tag-v1">Version 1</span>
+        <div class="card-name">The Tasting<br/>Table</div>
+        <p class="card-tagline">Set the scene, then swipe through 10 dishes one at a time. React honestly — want it, skip it, or never.</p>
+
+        <div class="mechanic-list">
+          <div class="mechanic-row">
+            <span class="mechanic-icon">🎭</span>
+            <span class="mechanic-text"><strong>Pick a scene</strong> — beach, romantic, friends, solo. Sets your context before food.</span>
+          </div>
+          <div class="mechanic-row">
+            <span class="mechanic-icon">🃏</span>
+            <span class="mechanic-text"><strong>10 dish cards</strong> — swipe or tap. Three reactions: Want / Not Tonight / Never.</span>
+          </div>
+          <div class="mechanic-row">
+            <span class="mechanic-icon">⚡</span>
+            <span class="mechanic-text"><strong>3 quick filters</strong> — dietary needs, budget, island.</span>
+          </div>
+        </div>
+
+        <div class="card-stats">
+          <div class="stat">
+            <span class="stat-val">~2 min</span>
+            <span class="stat-label">Duration</span>
+          </div>
+          <div class="stat">
+            <span class="stat-val">13</span>
+            <span class="stat-label">Total choices</span>
+          </div>
+          <div class="stat">
+            <span class="stat-val">8</span>
+            <span class="stat-label">Taste dimensions</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="card-footer">
+        <span class="card-footer-label">Card-by-card rating</span>
+        <span class="card-cta">Try This →</span>
+      </div>
+    </a>
+
+    <!-- ── VERSION 2 ── -->
+    <a class="version-card" href="/onboarding_v2.html">
+      <div class="card-stripe stripe-v2"></div>
+
+      <!-- Preview strip of duel pairs -->
+      <div class="preview-strip" style="background: linear-gradient(135deg,#1a1510,#374151);">
+        <span class="preview-item">🫐</span>
+        <span class="preview-vs">VS</span>
+        <span class="preview-item">🍖</span>
+        <span style="flex:1"></span>
+        <span class="preview-item">🍛</span>
+        <span class="preview-vs">VS</span>
+        <span class="preview-item">🍕</span>
+        <span style="flex:1"></span>
+        <span class="preview-item">🌅</span>
+        <span class="preview-vs">VS</span>
+        <span class="preview-item">🕯️</span>
+      </div>
+
+      <div class="card-body">
+        <span class="version-tag tag-v2">Version 2</span>
+        <div class="card-name">The<br/>Duel</div>
+        <p class="card-tagline">Screen splits in two. Two options face off. Tap your pick — no middle ground. 8 rapid matchups, done in 90 seconds.</p>
+
+        <div class="mechanic-list">
+          <div class="mechanic-row">
+            <span class="mechanic-icon">⚔️</span>
+            <span class="mechanic-text"><strong>Split screen</strong> — two options fill the entire screen. Tap your side.</span>
+          </div>
+          <div class="mechanic-row">
+            <span class="mechanic-icon">🎯</span>
+            <span class="mechanic-text"><strong>8 controlled matchups</strong> — each pair isolates exactly one preference dimension.</span>
+          </div>
+          <div class="mechanic-row">
+            <span class="mechanic-icon">🚫</span>
+            <span class="mechanic-text"><strong>No middle option</strong> — forced choice removes response bias. Every pick is a real signal.</span>
+          </div>
+        </div>
+
+        <div class="card-stats">
+          <div class="stat">
+            <span class="stat-val">~90 sec</span>
+            <span class="stat-label">Duration</span>
+          </div>
+          <div class="stat">
+            <span class="stat-val">11</span>
+            <span class="stat-label">Total choices</span>
+          </div>
+          <div class="stat">
+            <span class="stat-val">8</span>
+            <span class="stat-label">Taste dimensions</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="card-footer">
+        <span class="card-footer-label">Pairwise comparison</span>
+        <span class="card-cta">Try This →</span>
+      </div>
+    </a>
+
+  </div>
+
+  <div class="research-badge">
+    <span class="research-badge-icon">🔬</span>
+    <span class="research-badge-text">
+      <strong>All methods are research-backed.</strong>
+      V1 uses revealed preference theory. V2 uses conjoint analysis. V3 uses scenario-based elicitation. V4 uses layered composition elicitation. V5 uses strategic route tradeoff behavior.
+      Each version ends with a full methodology explanation.
+    </span>
+  </div>
+
+  <p class="bottom-note">
+    Not sure which to pick? Try any two — your results will differ slightly.<br/>
+    <a href="/">← Back to full restaurant search</a>
+  </p>
+
+</body>
+</html>

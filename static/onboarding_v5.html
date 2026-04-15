@@ -1,0 +1,541 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Ka'ana - V5 Island Route Runner</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700;900&family=DM+Serif+Display&display=swap" rel="stylesheet" />
+  <link href="https://api.mapbox.com/mapbox-gl-js/v3.5.1/mapbox-gl.css" rel="stylesheet" />
+  <style>
+    :root{--bg:#ede8de;--surface:#fff;--text:#1a1510;--muted:#6b5e52;--line:#1a1510;--accent:#1f7a8c;--accent2:#f2a65a;--shadow:4px 4px 0 #1a1510;--shadow-sm:2px 2px 0 #1a1510;--sans:"DM Sans",system-ui,sans-serif;--serif:"DM Serif Display",Georgia,serif}
+    *{box-sizing:border-box;margin:0;padding:0} html,body{height:100%} body{font-family:var(--sans);background:var(--bg);color:var(--text);overflow:hidden}
+    .screen{display:none;position:fixed;inset:0}.screen.active{display:flex}.scroll-screen{overflow-y:auto;justify-content:center;padding:36px 20px 56px}
+    #screen-welcome{background:radial-gradient(circle at 20% 20%,#2b6f7d 0%,#1f4e58 45%,#132429 100%);color:#edf3f5;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:24px}
+    .logo{font-size:11px;font-weight:900;letter-spacing:.28em;text-transform:uppercase;border:1.5px solid rgba(255,255,255,.25);padding:7px 18px;margin-bottom:30px}
+    .badge{font-size:10px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;border:1.5px solid var(--accent2);color:var(--accent2);padding:3px 10px;margin-bottom:14px}
+    .hero-title{font-family:var(--serif);font-size:clamp(42px,9.3vw,74px);line-height:.95;margin-bottom:12px}
+    .hero-sub{max-width:470px;font-size:14px;line-height:1.62;color:rgba(255,255,255,.78);margin-bottom:28px}
+    .stats{max-width:460px;width:100%;display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:30px}
+    .stat{border:1px solid rgba(255,255,255,.2);background:rgba(255,255,255,.06);padding:12px 8px;font-size:11px;line-height:1.3;font-weight:700}.stat b{display:block;font-size:21px;margin-bottom:5px}
+    .btn-main{width:100%;max-width:460px;border:none;background:var(--accent2);color:#1a1510;padding:15px 18px;font-size:13px;font-weight:900;text-transform:uppercase;letter-spacing:.08em;cursor:pointer}
+    .back-link{margin-top:12px;color:rgba(255,255,255,.62);text-decoration:none;font-size:12px;font-weight:600}
+
+    #screen-runner{background:linear-gradient(180deg,#10272e 0%,#173841 55%,#1f414a 100%);color:#edf3f5;flex-direction:column;overflow-y:auto}
+    .top{padding:20px 20px 0;flex-shrink:0;max-width:1240px;width:100%;margin:0 auto}
+    .progress{display:flex;gap:6px;margin-bottom:12px}.seg{flex:1;height:3px;background:rgba(255,255,255,.12);position:relative;overflow:hidden}.seg::after{content:"";position:absolute;inset:0;transform:scaleX(0);transform-origin:left;background:var(--accent2);transition:transform .25s}.seg.done::after,.seg.active::after{transform:scaleX(1)}.seg.active::after{background:#edf3f5}
+    .meta{display:flex;justify-content:space-between;margin-bottom:4px}.meta-tag{font-size:10px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--accent2)}.meta-count{font-size:11px;color:rgba(255,255,255,.45);font-weight:700}
+    .q-title{font-family:var(--serif);font-size:clamp(30px,4.2vw,52px);line-height:1.02;margin-bottom:6px}.q-sub{font-size:15px;color:rgba(255,255,255,.78);margin-bottom:14px}
+    .resource-row{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px}
+    .meter{border:1px solid rgba(255,255,255,.24);background:rgba(0,0,0,.22);padding:8px 12px;font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.08em}
+    .main{display:grid;grid-template-columns:1.2fr .8fr;gap:16px;padding:0 20px 20px;max-width:1240px;width:100%;margin:0 auto}
+    @media (max-width:980px){.main{grid-template-columns:1fr}}
+    .map-panel,.choices-panel{border:1.5px solid rgba(255,255,255,.22);background:rgba(0,0,0,.22);padding:14px;box-shadow:0 10px 30px rgba(0,0,0,.18)}
+    .map-title{font-size:10px;font-weight:800;letter-spacing:.16em;text-transform:uppercase;color:rgba(255,255,255,.72);margin-bottom:10px}
+    .map-box{height:420px;border:2px solid rgba(255,255,255,.28);position:relative;overflow:hidden;background:#163a46}
+    #routeMap{position:absolute;inset:0}
+    .map-overlay{
+      position:absolute;left:8px;top:8px;z-index:5;
+      background:rgba(10,16,20,.62);border:1px solid rgba(255,255,255,.28);
+      color:#edf3f5;font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;
+      padding:6px 10px;backdrop-filter: blur(4px);
+    }
+    .token-hint{
+      position:absolute;inset:0;z-index:6;display:none;align-items:center;justify-content:center;text-align:center;
+      padding:16px;background:rgba(10,12,14,.82);color:#f6f1e9;font-size:12px;line-height:1.5;
+    }
+    .token-hint.show{display:flex}
+    .route-log{margin-top:12px;font-size:13px;color:rgba(255,255,255,.84);line-height:1.5;min-height:44px}
+    .event-box{margin-top:12px;border:1.5px solid rgba(255,255,255,.34);background:rgba(242,166,90,.18);padding:10px 12px;font-size:13px;color:#fff}
+    .choices{display:flex;flex-direction:column;gap:9px}
+    .choice{border:1.5px solid rgba(255,255,255,.25);background:rgba(255,255,255,.07);color:#edf3f5;padding:12px;cursor:pointer;text-align:left;transition:.14s}
+    .choice:hover{border-color:rgba(255,255,255,.55);transform:translateY(-1px)}
+    .choice.selected{border-color:var(--accent2);background:rgba(242,166,90,.18);box-shadow:0 0 0 1px rgba(242,166,90,.4) inset}
+    .choice b{display:block;font-size:14px;margin-bottom:4px}.choice span{font-size:12px;color:rgba(255,255,255,.78);line-height:1.35}
+    .actions{display:flex;justify-content:space-between;align-items:center;margin-top:12px}
+    .hint{font-size:11px;color:rgba(255,255,255,.58)}
+    .btn-next{border:none;background:var(--accent2);color:#1a1510;padding:12px 18px;font-size:12px;text-transform:uppercase;font-weight:900;letter-spacing:.08em;cursor:pointer}
+    .btn-next:disabled{opacity:.35;cursor:not-allowed}
+
+    .constraint{background:#13100e;color:#ece7de;flex-direction:column;align-items:center;overflow-y:auto}
+    .constraint-inner{max-width:520px;width:100%;padding:40px 22px;margin:auto}
+    .c-badge{font-size:10px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--accent2);border:1px solid var(--accent2);display:inline-block;padding:3px 9px;margin-bottom:14px}
+    .c-title{font-family:var(--serif);font-size:clamp(28px,6vw,42px);line-height:1.06;margin-bottom:8px}.c-sub{color:rgba(255,255,255,.58);font-size:13px;line-height:1.6;margin-bottom:22px}
+    .tile-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:9px;margin-bottom:24px}@media(min-width:430px){.tile-grid{grid-template-columns:repeat(3,1fr)}}
+    .tile{border:1px solid rgba(255,255,255,.16);background:rgba(255,255,255,.05);color:#ece7de;padding:16px 10px;display:flex;flex-direction:column;align-items:center;gap:8px;cursor:pointer}
+    .tile.selected{border-color:var(--accent2);background:rgba(242,166,90,.16)}.tile-emoji{font-size:26px}.tile-label{font-size:10px;text-transform:uppercase;font-weight:700;letter-spacing:.06em;color:rgba(255,255,255,.66);text-align:center}
+    .c-nav{display:flex;justify-content:space-between;align-items:center}.btn-ghost{border:none;background:none;color:rgba(255,255,255,.58);font-size:12px;font-weight:600;cursor:pointer}
+
+    #screen-processing{background:#13100e;color:#ece7de;align-items:center;justify-content:center}
+    .proc{max-width:320px;text-align:center}.ring{width:52px;height:52px;margin:0 auto 20px;border:2px solid rgba(255,255,255,.12);border-top-color:var(--accent2);border-radius:50%;animation:spin 1s linear infinite}@keyframes spin{to{transform:rotate(360deg)}}
+    .proc h3{font-family:var(--serif);font-size:29px;line-height:1.1;margin-bottom:6px}.proc p{color:rgba(255,255,255,.56);font-size:12px;margin-bottom:16px}
+    .steps{list-style:none;text-align:left;display:flex;flex-direction:column;gap:8px}.step{font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:rgba(255,255,255,.2);font-weight:700}.step.active{color:var(--accent2)}.step.done{color:rgba(255,255,255,.52)}
+
+    #screen-results{background:var(--bg);color:var(--text)} .results{width:100%;max-width:700px}
+    .arch{border:2px solid var(--line);box-shadow:var(--shadow);background:#1a1510;color:#ede8de;padding:24px 28px;margin-bottom:24px}
+    .arch-tag{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.14em;opacity:.55;margin-bottom:7px}.arch-name{font-family:var(--serif);font-size:clamp(28px,5.6vw,44px);line-height:1.05;margin-bottom:8px}.arch-desc{font-size:13px;line-height:1.6;opacity:.82}
+    .title{font-size:24px;text-transform:uppercase;font-weight:900;margin-bottom:3px}.sub{font-size:13px;color:var(--muted);margin-bottom:18px}
+    .dims{display:grid;grid-template-columns:1fr 1fr;gap:12px 20px;margin-bottom:20px}@media(max-width:520px){.dims{grid-template-columns:1fr}}
+    .dim-top{display:flex;justify-content:space-between;font-size:10px;text-transform:uppercase;font-weight:700;letter-spacing:.08em;margin-bottom:4px}.track{height:6px;background:rgba(26,21,16,.12)}.fill{height:100%;background:var(--accent);width:0;transition:width 1s ease}
+    .actions2{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:20px}.btn-pal{border:2px solid var(--line);box-shadow:var(--shadow-sm);background:var(--surface);color:var(--text);padding:10px 15px;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;text-decoration:none;cursor:pointer}.btn-pal-ghost{border:none;background:none;color:var(--muted);padding:10px 4px;font-size:12px;font-weight:600;text-decoration:none}
+    .list{display:flex;flex-direction:column;gap:10px}.card{border:2px solid var(--line);background:var(--surface);box-shadow:var(--shadow-sm);display:flex}.rank{width:46px;border-right:2px solid var(--line);background:#e8e1d4;display:flex;align-items:center;justify-content:center;font-weight:900}.rank.top{background:var(--accent);color:#fff}
+    .body{padding:12px 14px;flex:1;min-width:0}.name{font-size:14px;font-weight:900;text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.meta-txt{font-size:11px;color:var(--muted);margin-top:2px}.reason{font-size:11px;color:var(--muted);margin-top:6px;font-style:italic}
+    .score{border-left:2px solid var(--line);padding:12px;display:flex;align-items:center}.pill{border:2px solid var(--line);background:var(--accent2);color:#1a1510;padding:4px 8px;font-size:12px;font-weight:900}
+  </style>
+</head>
+<body>
+  <div id="screen-welcome" class="screen active">
+    <div class="logo">KA'ANA</div>
+    <div class="badge">Version 5 - Island Route Runner</div>
+    <h1 class="hero-title">Plan Tonight's<br>Island Route.</h1>
+    <p class="hero-sub">You have limited time and fuel. Choose route decisions across Hawaii under live events, then we infer your Taste ID from your strategy.</p>
+    <div class="stats">
+      <div class="stat"><b>6</b>route turns</div>
+      <div class="stat"><b>100</b>fuel credits</div>
+      <div class="stat"><b>4</b>island contexts</div>
+    </div>
+    <button class="btn-main" onclick="startRunner()">Start Route</button>
+    <a class="back-link" href="/selector.html">Try another version</a>
+  </div>
+
+  <div id="screen-runner" class="screen">
+    <div class="top">
+      <div class="progress" id="progress"></div>
+      <div class="meta"><div class="meta-tag" id="metaTag">Turn 1</div><div class="meta-count" id="metaCount">1 / 6</div></div>
+      <div class="q-title" id="qTitle"></div>
+      <div class="q-sub" id="qSub"></div>
+      <div class="resource-row">
+        <div class="meter" id="fuelMeter">Fuel: 100</div>
+        <div class="meter" id="timeMeter">Time: 100</div>
+        <div class="meter" id="riskMeter">Risk: 0</div>
+      </div>
+    </div>
+    <div class="main">
+      <div class="map-panel">
+        <div class="map-title">Island Map Context</div>
+        <div class="map-box">
+          <div id="routeMap"></div>
+          <div class="map-overlay">Island Route Layer</div>
+          <div class="token-hint" id="tokenHint">
+            Add your Mapbox token in `MAPBOX_TOKEN` inside `onboarding_v5.html` to enable the live map.<br/>
+            You can get a token from mapbox.com.
+          </div>
+        </div>
+        <div class="event-box" id="eventBox">Event: Clear roads. All routes open.</div>
+        <div class="route-log" id="routeLog">No route decisions yet.</div>
+      </div>
+      <div class="choices-panel">
+        <div class="map-title">Choose Route Move</div>
+        <div class="choices" id="choices"></div>
+        <div class="actions">
+          <div class="hint">Tradeoff strategy drives scoring</div>
+          <button class="btn-next" id="nextBtn" onclick="nextTurn()" disabled>Next Turn</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="screen-dietary" class="screen constraint">
+    <div class="constraint-inner">
+      <div class="c-badge">Almost there</div>
+      <h2 class="c-title">Any dietary restrictions?</h2>
+      <p class="c-sub">We'll remove restaurants that cannot accommodate your needs.</p>
+      <div class="tile-grid" id="dietaryGrid"></div>
+      <div class="c-nav">
+        <button class="btn-ghost" onclick="goScreen('runner')">Back</button>
+        <button class="btn-next" onclick="goScreen('island')">Continue</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="screen-island" class="screen constraint">
+    <div class="constraint-inner">
+      <div class="c-badge">Last step</div>
+      <h2 class="c-title">Which island are you on?</h2>
+      <p class="c-sub">Recommendations are filtered to where you can actually dine.</p>
+      <div class="tile-grid" id="islandGrid"></div>
+      <div class="c-nav">
+        <button class="btn-ghost" onclick="goScreen('dietary')">Back</button>
+        <button class="btn-next" id="islandNextBtn" onclick="buildTasteID()" disabled>Find My Restaurants</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="screen-processing" class="screen">
+    <div class="proc">
+      <div class="ring"></div>
+      <h3>Scoring Your<br>Route Profile</h3>
+      <p>Converting route tradeoffs into the same 8-dimension Taste ID.</p>
+      <ul class="steps">
+        <li class="step" id="pstep-1">Reading route choices</li>
+        <li class="step" id="pstep-2">Weighting consistency</li>
+        <li class="step" id="pstep-3">Building payload</li>
+        <li class="step" id="pstep-4">Querying vector index</li>
+        <li class="step" id="pstep-5">Ranking top matches</li>
+      </ul>
+    </div>
+  </div>
+
+  <div id="screen-results" class="screen scroll-screen">
+    <div class="results">
+      <div class="arch">
+        <div class="arch-tag">Your Food Archetype</div>
+        <div class="arch-name" id="archetypeName">The Explorer</div>
+        <div class="arch-desc" id="archetypeDesc">You seek unfamiliar places with local character and bold stories.</div>
+      </div>
+      <div class="title">Top Matches</div>
+      <div class="sub">Recommendations from your island route strategy and constraints.</div>
+      <div class="dims" id="tasteDims"></div>
+      <div class="actions2">
+        <a class="btn-pal" href="/selector.html">All Versions</a>
+        <a class="btn-pal-ghost" href="/">Back to Search</a>
+      </div>
+      <div class="list" id="resultsList"></div>
+    </div>
+  </div>
+
+  <script src="https://api.mapbox.com/mapbox-gl-js/v3.5.1/mapbox-gl.js"></script>
+  <script>
+    const DIM_LABELS = { adventurousness:"Adventurousness", spice_tolerance:"Spice Tolerance", health_orientation:"Health Focus", flavor_complexity:"Flavor Complexity", price_orientation:"Price Willingness", social_context:"Social Energy", local_engagement:"Local Engagement", format_preference:"Dining Format" };
+    const DIMS = Object.keys(DIM_LABELS);
+    const ROUNDS = [
+      { title:"You landed in Honolulu at 6 PM.", sub:"Pick your first route direction.", event:"Event: Friday rush traffic on city roads.", options:[
+        { label:"Go straight to a hidden local spot", desc:"Longer route, high local signal", target:"oahu", cost:{fuel:18,time:20,risk:8}, delta:{local_engagement:3, adventurousness:2, price_orientation:-1}},
+        { label:"Choose top-rated convenient district", desc:"Efficient and safe", target:"oahu", cost:{fuel:10,time:10,risk:2}, delta:{format_preference:1, adventurousness:-1, price_orientation:1}},
+        { label:"Detour scenic coast before dinner", desc:"Experience-first route", target:"kauai", cost:{fuel:15,time:18,risk:4}, delta:{format_preference:2, local_engagement:1, price_orientation:1}}
+      ]},
+      { title:"A storm alert appears on one route.", sub:"How do you adapt?", event:"Event: Rain blocks one scenic segment.", options:[
+        { label:"Push through to chef-driven destination", desc:"Risky but rewarding", target:"big_island", cost:{fuel:16,time:14,risk:10}, delta:{adventurousness:2, flavor_complexity:2, price_orientation:1}},
+        { label:"Switch to nearest reliable option", desc:"Stability over risk", target:"oahu", cost:{fuel:8,time:9,risk:1}, delta:{adventurousness:-1, format_preference:1}},
+        { label:"Find alternate local neighborhood", desc:"Flexible exploration", target:"maui", cost:{fuel:12,time:13,risk:5}, delta:{local_engagement:2, adventurousness:1}}
+      ]},
+      { title:"Friends text: 'Can we join?'", sub:"Your route must consider group dynamics.", event:"Event: Party size increased.", options:[
+        { label:"Reroute to lively shared-plate place", desc:"Social momentum", target:"maui", cost:{fuel:11,time:10,risk:3}, delta:{social_context:3, adventurousness:1}},
+        { label:"Keep intimate plan, limit group size", desc:"Curated quality", target:"oahu", cost:{fuel:9,time:8,risk:2}, delta:{format_preference:2, social_context:-1, price_orientation:1}},
+        { label:"Split with flexible midway option", desc:"Compromise route", target:"kauai", cost:{fuel:10,time:11,risk:2}, delta:{social_context:1, format_preference:1}}
+      ]},
+      { title:"You pass three dinner zones.", sub:"Which zone do you prioritize?", event:"Event: Peak dining hour; tables are tightening.", options:[
+        { label:"Spice-heavy international quarter", desc:"Bold flavor corridor", target:"oahu", cost:{fuel:13,time:11,risk:5}, delta:{spice_tolerance:3, adventurousness:2, flavor_complexity:1}},
+        { label:"Wellness and fresh market strip", desc:"Health-focused route", target:"kauai", cost:{fuel:10,time:10,risk:2}, delta:{health_orientation:3, local_engagement:1}},
+        { label:"Classic comfort block", desc:"Predictable satisfaction", target:"big_island", cost:{fuel:8,time:8,risk:1}, delta:{adventurousness:-2, health_orientation:-1, price_orientation:-1}}
+      ]},
+      { title:"Budget pressure check.", sub:"Fuel left is dropping. What's your strategy?", event:"Event: Ride costs surge near downtown.", options:[
+        { label:"Spend more for standout finale", desc:"Premium intent", target:"maui", cost:{fuel:14,time:10,risk:3}, delta:{price_orientation:3, format_preference:1}},
+        { label:"Target best value route cluster", desc:"Cost-efficient curation", target:"big_island", cost:{fuel:7,time:9,risk:1}, delta:{price_orientation:-3, local_engagement:1}},
+        { label:"Balanced spend-to-quality ratio", desc:"Controlled tradeoff", target:"oahu", cost:{fuel:10,time:10,risk:2}, delta:{price_orientation:0, flavor_complexity:1}}
+      ]},
+      { title:"Final decision before booking.", sub:"Lock your route outcome.", event:"Event: Last table windows open now.", options:[
+        { label:"Book unique local destination", desc:"Discovery outcome", target:"kauai", cost:{fuel:10,time:12,risk:4}, delta:{local_engagement:2, adventurousness:2}},
+        { label:"Book quiet refined venue", desc:"Precision outcome", target:"maui", cost:{fuel:9,time:9,risk:1}, delta:{format_preference:2, flavor_complexity:2, social_context:-1}},
+        { label:"Book energetic social hotspot", desc:"High energy outcome", target:"oahu", cost:{fuel:11,time:10,risk:3}, delta:{social_context:3, spice_tolerance:1}}
+      ]}
+    ];
+    const DIETARY_OPTIONS = [
+      { id:"none",label:"No Restrictions",emoji:"✅" },{ id:"vegetarian",label:"Vegetarian",emoji:"🥦" },{ id:"vegan",label:"Vegan",emoji:"🌱" },{ id:"gluten_free",label:"Gluten-Free",emoji:"🌾" },{ id:"halal",label:"Halal",emoji:"☪️" },{ id:"kosher",label:"Kosher",emoji:"✡️" },{ id:"shellfish",label:"No Shellfish",emoji:"🦞" },{ id:"dairy_free",label:"Dairy-Free",emoji:"🥛" },{ id:"nut_allergy",label:"Nut Allergy",emoji:"🥜" }
+    ];
+    const ISLAND_OPTIONS = [
+      { id:"oahu",label:"O'ahu",emoji:"🌺" },{ id:"maui",label:"Maui",emoji:"🌊" },{ id:"big_island",label:"Big Island",emoji:"🌋" },{ id:"kauai",label:"Kaua'i",emoji:"🌿" },{ id:"molokai",label:"Moloka'i",emoji:"🐠" },{ id:"lanai",label:"Lana'i",emoji:"🦋" }
+    ];
+    const ARCHETYPES = [
+      { name:"The Explorer", condition:s=>s.adventurousness>=7&&s.local_engagement>=6, desc:"You seek unfamiliar places with local character and bold stories." },
+      { name:"The Connoisseur", condition:s=>s.price_orientation>=7&&s.flavor_complexity>=7, desc:"You gravitate to craftsmanship, precision, and layered technique." },
+      { name:"The Social Feaster", condition:s=>s.social_context>=7, desc:"Meals are social rituals. You optimize for shared momentum." },
+      { name:"The Health Seeker", condition:s=>s.health_orientation>=7, desc:"You pursue nourishment and freshness without sacrificing pleasure." },
+      { name:"The Comfort Lover", condition:s=>s.adventurousness<=4&&s.health_orientation<=4, desc:"You trust dependable favorites that always deliver." },
+      { name:"The Value Hunter", condition:s=>s.price_orientation<=3, desc:"You maximize quality-per-dollar with disciplined picks." }
+    ];
+    const DEFAULT_ARCHETYPE = { name:"The Balanced Eater", desc:"Your choices adapt fluidly to context, mood, and company." };
+
+    const MAPBOX_TOKEN = "YOUR_MAPBOX_TOKEN_HERE"; // replace with your token from mapbox.com
+    const ISLAND_POINTS = {
+      kauai: { lng: -159.5, lat: 22.08, label: "Kaua'i" },
+      oahu: { lng: -157.95, lat: 21.47, label: "O'ahu" },
+      maui: { lng: -156.33, lat: 20.86, label: "Maui" },
+      big_island: { lng: -155.57, lat: 19.64, label: "Big Island" }
+    };
+    const state = { turn:0, selected:null, scores:Object.fromEntries(DIMS.map(d=>[d,5])), fuel:100, time:100, risk:0, routeLog:[], routePoints:[ISLAND_POINTS.oahu], dietary:new Set(["none"]), island:null };
+    const behavior = { turnStart:0, hoverSwitches:0, lastHover:null };
+    let map = null;
+    let markers = [];
+    function clamp(v,min,max){return Math.max(min,Math.min(max,v))} function round2(v){return Math.round(v*100)/100} function sleep(ms){return new Promise(r=>setTimeout(r,ms))}
+    function goScreen(id){document.querySelectorAll(".screen").forEach(s=>s.classList.remove("active"));const n=document.getElementById("screen-"+id);n.classList.add("active");if(n.classList.contains("scroll-screen"))n.scrollTop=0}
+
+    function startRunner(){
+      state.turn=0; state.selected=null; state.scores=Object.fromEntries(DIMS.map(d=>[d,5]));
+      state.fuel=100; state.time=100; state.risk=0; state.routeLog=[]; state.routePoints=[ISLAND_POINTS.oahu];
+      initMapIfNeeded();
+      renderTurn();
+      goScreen("runner");
+    }
+    function updateMeters(){ document.getElementById("fuelMeter").textContent="Fuel: "+state.fuel; document.getElementById("timeMeter").textContent="Time: "+state.time; document.getElementById("riskMeter").textContent="Risk: "+state.risk; }
+    function renderTurn(){
+      const r = ROUNDS[state.turn];
+      const p = document.getElementById("progress"); p.innerHTML="";
+      for(let i=0;i<ROUNDS.length;i++){const seg=document.createElement("div");seg.className="seg"+(i<state.turn?" done":i===state.turn?" active":"");p.appendChild(seg)}
+      document.getElementById("metaTag").textContent="Turn "+(state.turn+1);
+      document.getElementById("metaCount").textContent=(state.turn+1)+" / "+ROUNDS.length;
+      document.getElementById("qTitle").textContent=r.title;
+      document.getElementById("qSub").textContent=r.sub;
+      document.getElementById("eventBox").textContent=r.event;
+      document.getElementById("routeLog").textContent=state.routeLog.length?("Route so far: "+state.routeLog.join(" → ")):"No route decisions yet.";
+      document.getElementById("nextBtn").disabled=true;
+      state.selected=null;
+
+      const choices=document.getElementById("choices"); choices.innerHTML="";
+      r.options.forEach((opt,idx)=>{const b=document.createElement("button");b.className="choice";b.innerHTML="<b>"+opt.label+"</b><span>"+opt.desc+" · Fuel -"+opt.cost.fuel+" · Time -"+opt.cost.time+" · Risk +"+opt.cost.risk+" · "+opt.target.replace('_',' ').toUpperCase()+"</span>";b.addEventListener("mouseenter",()=>trackHover(idx));b.addEventListener("click",()=>selectChoice(idx));choices.appendChild(b);});
+      behavior.turnStart=performance.now(); behavior.hoverSwitches=0; behavior.lastHover=null;
+      updateMap();
+      updateMeters();
+    }
+    function trackHover(idx){if(behavior.lastHover!==null&&behavior.lastHover!==idx)behavior.hoverSwitches++; behavior.lastHover=idx;}
+    function selectChoice(idx){
+      state.selected=idx;
+      document.querySelectorAll(".choice").forEach((c,i)=>c.classList.toggle("selected",i===idx));
+      document.getElementById("nextBtn").disabled=false;
+      updateMap(ROUNDS[state.turn].options[idx].target);
+    }
+    function nextTurn(){
+      if(state.selected===null)return;
+      const r=ROUNDS[state.turn]; const chosen=r.options[state.selected];
+      state.fuel=clamp(state.fuel-chosen.cost.fuel,0,100); state.time=clamp(state.time-chosen.cost.time,0,100); state.risk=clamp(state.risk+chosen.cost.risk,0,100);
+      state.routePoints.push(ISLAND_POINTS[chosen.target]);
+      const elapsed=performance.now()-behavior.turnStart;
+      const speed=clamp(1-(elapsed-1000)/5200,0.45,1.15);
+      const hesitation=clamp(1-behavior.hoverSwitches*0.06,0.62,1);
+      // low remaining resources add pressure and amplify strategic decisions slightly
+      const pressureBoost = clamp(1 + ((100 - state.fuel) / 100) * 0.12, 1, 1.12);
+      const confidence=speed*hesitation*pressureBoost;
+      Object.entries(chosen.delta).forEach(([dim,val])=>{if(dim in state.scores)state.scores[dim]=clamp(state.scores[dim]+val*confidence,0,10)});
+      state.routeLog.push(chosen.label);
+      state.turn++;
+      if(state.turn>=ROUNDS.length){ goScreen("dietary"); } else { renderTurn(); }
+    }
+
+    function initMapIfNeeded(){
+      if (map || !document.getElementById("routeMap")) return;
+      if (!MAPBOX_TOKEN || typeof mapboxgl === "undefined"){
+        document.getElementById("tokenHint").classList.add("show");
+        return;
+      }
+      document.getElementById("tokenHint").classList.remove("show");
+      mapboxgl.accessToken = MAPBOX_TOKEN;
+      map = new mapboxgl.Map({
+        container: "routeMap",
+        style: "mapbox://styles/mapbox/dark-v11",
+        center: [-157.6, 20.9],
+        zoom: 6.1,
+        pitch: 38,
+        bearing: -14,
+        interactive: true,
+        dragRotate: false,
+        touchPitch: false
+      });
+      map.on("load", () => {
+        map.setPaintProperty("water", "fill-color", "#123945");
+        map.setPaintProperty("land", "background-color", "#163841");
+
+        map.addSource("island-points", {
+          type: "geojson",
+          data: {
+            type: "FeatureCollection",
+            features: Object.entries(ISLAND_POINTS).map(([key, p]) => ({
+              type: "Feature",
+              properties: { key },
+              geometry: { type: "Point", coordinates: [p.lng, p.lat] }
+            }))
+          }
+        });
+        map.addLayer({
+          id: "island-glow",
+          type: "circle",
+          source: "island-points",
+          paint: {
+            "circle-radius": 22,
+            "circle-color": "#1f7a8c",
+            "circle-opacity": 0.22,
+            "circle-blur": 0.8
+          }
+        });
+        map.addLayer({
+          id: "island-core",
+          type: "circle",
+          source: "island-points",
+          paint: {
+            "circle-radius": 5,
+            "circle-color": "#f2a65a",
+            "circle-stroke-color": "#1a1510",
+            "circle-stroke-width": 1.5
+          }
+        });
+
+        map.addSource("runner-route", {
+          type: "geojson",
+          data: { type: "Feature", geometry: { type: "LineString", coordinates: [] } }
+        });
+        map.addLayer({
+          id: "runner-route-line",
+          type: "line",
+          source: "runner-route",
+          paint: {
+            "line-color": "#f2a65a",
+            "line-width": 4,
+            "line-opacity": 0.95,
+            "line-blur": 0.3
+          }
+        });
+        map.addLayer({
+          id: "runner-route-glow",
+          type: "line",
+          source: "runner-route",
+          paint: {
+            "line-color": "#f2a65a",
+            "line-width": 10,
+            "line-opacity": 0.25,
+            "line-blur": 1.2
+          }
+        }, "runner-route-line");
+        map.addSource("runner-head", {
+          type: "geojson",
+          data: { type: "FeatureCollection", features: [] }
+        });
+        map.addLayer({
+          id: "runner-head-circle",
+          type: "circle",
+          source: "runner-head",
+          paint: {
+            "circle-radius": 7,
+            "circle-color": "#f2a65a",
+            "circle-stroke-width": 2,
+            "circle-stroke-color": "#1a1510"
+          }
+        });
+        map.addSource("runner-preview", {
+          type: "geojson",
+          data: { type: "FeatureCollection", features: [] }
+        });
+        map.addLayer({
+          id: "runner-preview-circle",
+          type: "circle",
+          source: "runner-preview",
+          paint: {
+            "circle-radius": 12,
+            "circle-color": "#f2a65a",
+            "circle-opacity": 0.28,
+            "circle-stroke-color": "#f2a65a",
+            "circle-stroke-width": 2
+          }
+        });
+        map.addSource("runner-preview-line", {
+          type: "geojson",
+          data: { type: "Feature", geometry: { type: "LineString", coordinates: [] } }
+        });
+        map.addLayer({
+          id: "runner-preview-line-layer",
+          type: "line",
+          source: "runner-preview-line",
+          paint: {
+            "line-color": "#ffffff",
+            "line-width": 2.5,
+            "line-dasharray": [2, 2],
+            "line-opacity": 0.65
+          }
+        });
+        renderIslandMarkers();
+        updateMap();
+      });
+    }
+
+    function renderIslandMarkers(){
+      markers.forEach(m => m.remove());
+      markers = [];
+      Object.entries(ISLAND_POINTS).forEach(([key, p]) => {
+        const el = document.createElement("div");
+        el.style.cssText = "background:#e7d2b1;border:2px solid #1a1510;color:#1a1510;padding:4px 7px;font-size:10px;font-weight:900;letter-spacing:.07em;text-transform:uppercase;box-shadow:2px 2px 0 #1a1510;";
+        el.textContent = p.label;
+        const marker = new mapboxgl.Marker({ element: el, anchor: "center" }).setLngLat([p.lng, p.lat]).addTo(map);
+        markers.push(marker);
+      });
+    }
+
+    function updateMap(previewTarget){
+      if (!map || !map.isStyleLoaded()) return;
+      const points = state.routePoints.slice();
+      if (previewTarget && ISLAND_POINTS[previewTarget]) points.push(ISLAND_POINTS[previewTarget]);
+      const coordinates = points.map(p => [p.lng, p.lat]);
+      const source = map.getSource("runner-route");
+      if (source) {
+        source.setData({ type: "Feature", geometry: { type: "LineString", coordinates } });
+      }
+      const previewLine = map.getSource("runner-preview-line");
+      if (previewLine){
+        if (previewTarget && ISLAND_POINTS[previewTarget] && state.routePoints.length){
+          const start = state.routePoints[state.routePoints.length - 1];
+          const end = ISLAND_POINTS[previewTarget];
+          previewLine.setData({ type:"Feature", geometry:{ type:"LineString", coordinates:[[start.lng,start.lat],[end.lng,end.lat]] } });
+        } else {
+          previewLine.setData({ type:"Feature", geometry:{ type:"LineString", coordinates:[] } });
+        }
+      }
+      const preview = map.getSource("runner-preview");
+      if (preview){
+        if(previewTarget && ISLAND_POINTS[previewTarget]){
+          const pp = ISLAND_POINTS[previewTarget];
+          preview.setData({ type:"FeatureCollection", features:[{ type:"Feature", geometry:{ type:"Point", coordinates:[pp.lng, pp.lat] } }] });
+        } else {
+          preview.setData({ type:"FeatureCollection", features:[] });
+        }
+      }
+      const head = map.getSource("runner-head");
+      if (head && coordinates.length){
+        const last = coordinates[coordinates.length - 1];
+        head.setData({ type:"FeatureCollection", features:[{ type:"Feature", geometry:{ type:"Point", coordinates:last } }] });
+      }
+      if (coordinates.length > 1){
+        const bounds = coordinates.reduce((b, c) => b.extend(c), new mapboxgl.LngLatBounds(coordinates[0], coordinates[0]));
+        map.fitBounds(bounds, { padding: { top: 70, right: 70, bottom: 70, left: 70 }, duration: 520, maxZoom: 6.7 });
+      } else if (coordinates.length){
+        map.easeTo({ center: coordinates[0], duration: 520, zoom: 6.35 });
+      }
+    }
+
+    function buildDietaryGrid(){const g=document.getElementById("dietaryGrid");DIETARY_OPTIONS.forEach(opt=>{const t=document.createElement("button");t.className="tile"+(opt.id==="none"?" selected":"");t.dataset.id=opt.id;t.innerHTML='<span class="tile-emoji">'+opt.emoji+'</span><span class="tile-label">'+opt.label+"</span>";t.addEventListener("click",()=>toggleDietary(opt.id,t));g.appendChild(t);});}
+    function toggleDietary(id,tile){if(id==="none"){state.dietary.clear();state.dietary.add("none");document.querySelectorAll("#dietaryGrid .tile").forEach(t=>t.classList.toggle("selected",t.dataset.id==="none"));return;}
+      state.dietary.delete("none");document.querySelector('#dietaryGrid [data-id="none"]').classList.remove("selected");
+      if(state.dietary.has(id)){state.dietary.delete(id);tile.classList.remove("selected");}else{state.dietary.add(id);tile.classList.add("selected");}
+      if(!state.dietary.size){state.dietary.add("none");document.querySelector('#dietaryGrid [data-id="none"]').classList.add("selected");}
+    }
+    function buildIslandGrid(){const g=document.getElementById("islandGrid");ISLAND_OPTIONS.forEach(opt=>{const t=document.createElement("button");t.className="tile";t.dataset.id=opt.id;t.innerHTML='<span class="tile-emoji">'+opt.emoji+'</span><span class="tile-label">'+opt.label+"</span>";t.addEventListener("click",()=>{state.island=opt.id;document.querySelectorAll("#islandGrid .tile").forEach(x=>x.classList.toggle("selected",x.dataset.id===opt.id));document.getElementById("islandNextBtn").disabled=false;});g.appendChild(t);});}
+    function computeScores(){const out={};DIMS.forEach(d=>out[d]=round2(clamp(state.scores[d],0,10)));return out;}
+    function getArchetype(s){for(const a of ARCHETYPES){if(a.condition(s))return a;}return DEFAULT_ARCHETYPE;}
+    function buildPayload(scores){
+      let dietary="no_restrictions"; if(state.dietary.has("vegan"))dietary="vegan"; else if(state.dietary.has("vegetarian"))dietary="vegetarian"; else if(state.dietary.has("gluten_free"))dietary="gluten_free"; else if(state.dietary.has("shellfish")||state.dietary.has("dairy_free"))dietary="pescatarian";
+      let cuisine="local_hawaiian"; if(scores.adventurousness>=7&&scores.flavor_complexity>=6)cuisine="world_cuisine"; else if(scores.local_engagement>=7)cuisine="local_hawaiian"; else if(scores.flavor_complexity>=7)cuisine="modern_fusion"; else if(scores.health_orientation>=7)cuisine="healthy_light"; else if(scores.adventurousness<=4)cuisine="comfort_casual"; else if(scores.flavor_complexity>=5)cuisine="japanese_pacific";
+      let atmosphere="beach_outdoor"; if(scores.format_preference>=8)atmosphere="upscale_elegant"; else if(scores.social_context>=7)atmosphere="lively_social"; else if(scores.format_preference>=6)atmosphere="scenic_unique"; else if(scores.adventurousness<=4)atmosphere="cozy_local";
+      let occasion="solo_explorer"; if(scores.social_context>=7)occasion="friends_group"; else if(scores.format_preference>=7)occasion="romantic_date"; else if(scores.social_context>=4)occasion="friends_group"; else if(scores.adventurousness>=7)occasion="adventurous";
+      let budget=2; if(scores.price_orientation>=8)budget=4; else if(scores.price_orientation>=6)budget=3; else if(scores.price_orientation>=4)budget=2; else budget=1;
+      return {dietary,occasion,cuisine,atmosphere,budget,noise_pref:Math.min(4,Math.max(1,Math.round(1+(scores.social_context/10)*3))),island:state.island||"any",current_time:new Date().getHours()};
+    }
+    async function buildTasteID(){
+      if(!state.island)return; goScreen("processing");
+      const scores=computeScores(); const archetype=getArchetype(scores); const payload=buildPayload(scores);
+      const steps=["pstep-1","pstep-2","pstep-3","pstep-4","pstep-5"];
+      for(let i=0;i<steps.length-1;i++){document.getElementById(steps[i]).classList.add("active");await sleep(340);document.getElementById(steps[i]).classList.remove("active");document.getElementById(steps[i]).classList.add("done");}
+      document.getElementById(steps[4]).classList.add("active");
+      let results=[],error=null; try{const res=await fetch("http://localhost:8001/recommend",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(payload)}); if(!res.ok)throw new Error("Server returned "+res.status); const data=await res.json(); results=data.recommendations||[];}catch(e){error=e.message;}
+      document.getElementById(steps[4]).classList.remove("active");document.getElementById(steps[4]).classList.add("done"); await sleep(240);
+      renderResults(scores,archetype,results,error); goScreen("results");
+    }
+    function renderResults(scores,archetype,results,error){
+      document.getElementById("archetypeName").textContent=archetype.name; document.getElementById("archetypeDesc").textContent=archetype.desc;
+      const dims=document.getElementById("tasteDims"); dims.innerHTML="";
+      Object.entries(DIM_LABELS).forEach(([k,l])=>{const v=scores[k]??5;const p=(v/10)*100;const row=document.createElement("div");row.innerHTML='<div class="dim-top"><span>'+l+"</span><span>"+v.toFixed(1)+'</span></div><div class="track"><div class="fill" data-width="'+p+'%"></div></div>';dims.appendChild(row);});
+      setTimeout(()=>document.querySelectorAll(".fill").forEach(f=>f.style.width=f.dataset.width),280);
+      const list=document.getElementById("resultsList"); list.innerHTML="";
+      if(error){list.innerHTML='<div class="card"><div class="body"><div class="name">Connection issue</div><div class="reason">Could not reach backend on port 8001. Error: '+error+"</div></div></div>";return;}
+      if(!results.length){list.innerHTML='<div class="card"><div class="body"><div class="name">No matches</div><div class="reason">Try another island or onboarding version.</div></div></div>';return;}
+      results.slice(0,10).forEach((r,i)=>{const rest=r.restaurant||r;const score=((r.final_score??r.score??0)*100).toFixed(0);const island=rest.island?rest.island.replace("_"," ").replace(/\b\w/g,c=>c.toUpperCase()):"";const price=rest.price_range?"$".repeat(rest.price_range):"";const reason=(r.explanation||[])[0]||"";const c=document.createElement("div");c.className="card";c.innerHTML='<div class="rank '+(i===0?"top":"")+'">'+(i===0?"★":(i+1))+'</div><div class="body"><div class="name">'+(rest.name||"Unknown")+'</div><div class="meta-txt">'+island+(price?" · "+price:"")+'</div>'+(reason?'<div class="reason">"'+reason+'"</div>':"")+'</div><div class="score"><div class="pill">'+score+"%</div></div>";list.appendChild(c);});
+    }
+    buildDietaryGrid(); buildIslandGrid();
+  </script>
+</body>
+</html>

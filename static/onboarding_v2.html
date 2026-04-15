@@ -1,0 +1,1575 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Ka'ana — The Duel</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700;900&display=swap" rel="stylesheet" />
+  <style>
+    /* ─── TOKENS ─── */
+    :root {
+      --bg:        #ede8de;
+      --surface:   #ffffff;
+      --accent:    #b8705a;
+      --accent-dk: #9a5c48;
+      --text:      #1a1510;
+      --muted:     #6b5e52;
+      --border:    #1a1510;
+      --shadow:    4px 4px 0 #1a1510;
+      --shadow-sm: 2px 2px 0 #1a1510;
+      --font:      'DM Sans', system-ui, sans-serif;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html, body {
+      height: 100%;
+      font-family: var(--font);
+      color: var(--text);
+      overflow: hidden; /* duel screen is full-viewport */
+    }
+
+    /* ─── SCREEN SYSTEM ─── */
+    .screen {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: var(--bg);
+    }
+    .screen.active { display: flex; }
+
+    /* Screens that scroll */
+    .screen.scrollable {
+      overflow-y: auto;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-start;
+      padding: 40px 20px;
+    }
+
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(16px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    .screen.active.animate { animation: fadeUp 0.35s ease both; }
+
+    /* ─── TYPOGRAPHY ─── */
+    .label-tag {
+      display: inline-block;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--accent);
+      border: 1.5px solid var(--accent);
+      padding: 3px 10px;
+      margin-bottom: 14px;
+    }
+
+    h1 {
+      font-size: clamp(28px, 6vw, 48px);
+      font-weight: 900;
+      line-height: 1.05;
+      text-transform: uppercase;
+      letter-spacing: -0.02em;
+      margin-bottom: 12px;
+    }
+
+    h2 {
+      font-size: clamp(20px, 4vw, 30px);
+      font-weight: 900;
+      text-transform: uppercase;
+      letter-spacing: -0.01em;
+      margin-bottom: 8px;
+    }
+
+    .subtitle {
+      font-size: 14px;
+      color: var(--muted);
+      font-weight: 500;
+      line-height: 1.5;
+      margin-bottom: 28px;
+    }
+
+    /* ─── BUTTONS ─── */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      font-family: var(--font);
+      font-size: 13px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      cursor: pointer;
+      border: 2px solid var(--border);
+      padding: 14px 32px;
+      transition: transform 0.1s, box-shadow 0.1s;
+      text-decoration: none;
+      color: inherit;
+      background: transparent;
+    }
+    .btn:active { transform: translate(2px,2px); box-shadow: none !important; }
+    .btn-primary { background: var(--accent); color: #fff; box-shadow: var(--shadow); }
+    .btn-primary:hover { background: var(--accent-dk); }
+    .btn-outline { box-shadow: var(--shadow-sm); }
+    .btn-outline:hover { background: var(--surface); }
+    .btn-ghost { border-color: transparent; box-shadow: none; color: var(--muted); font-size: 12px; }
+    .btn-ghost:hover { color: var(--text); }
+
+    /* ─── CONSTRAINT TILES (shared) ─── */
+    .constraint-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 10px;
+      width: 100%;
+      max-width: 480px;
+      margin-bottom: 28px;
+    }
+    @media (min-width: 400px) { .constraint-grid { grid-template-columns: repeat(3, 1fr); } }
+
+    .constraint-tile {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+      padding: 16px 10px;
+      border: 2px solid var(--border);
+      background: var(--surface);
+      box-shadow: var(--shadow-sm);
+      cursor: pointer;
+      transition: transform 0.1s, box-shadow 0.1s, background 0.1s;
+      font-family: var(--font);
+    }
+    .constraint-tile:hover { transform: translate(-1px,-1px); box-shadow: var(--shadow); }
+    .constraint-tile.selected { background: var(--accent); color: #fff; border-color: var(--accent-dk); box-shadow: var(--shadow); transform: translate(-2px,-2px); }
+    .tile-emoji { font-size: 24px; }
+    .tile-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em; text-align: center; line-height: 1.2; }
+
+    .budget-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 12px;
+      width: 100%;
+      max-width: 480px;
+      margin-bottom: 28px;
+    }
+    .budget-tile {
+      padding: 20px 16px;
+      border: 2px solid var(--border);
+      background: var(--surface);
+      box-shadow: var(--shadow-sm);
+      cursor: pointer;
+      transition: transform 0.1s, box-shadow 0.1s, background 0.1s;
+      font-family: var(--font);
+    }
+    .budget-tile:hover { transform: translate(-1px,-1px); box-shadow: var(--shadow); }
+    .budget-tile.selected { background: var(--accent); color: #fff; border-color: var(--accent-dk); box-shadow: var(--shadow); transform: translate(-2px,-2px); }
+    .budget-price { font-size: 22px; font-weight: 900; margin-bottom: 4px; }
+    .budget-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em; }
+    .budget-range { font-size: 11px; opacity: 0.65; margin-top: 2px; }
+
+    .island-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 10px;
+      width: 100%;
+      max-width: 480px;
+      margin-bottom: 28px;
+    }
+    @media (min-width: 480px) { .island-grid { grid-template-columns: repeat(3, 1fr); } }
+
+    .nav-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      width: 100%;
+      max-width: 480px;
+      margin-top: 8px;
+    }
+
+    /* ─── PROCESSING ─── */
+    .processing-box {
+      border: 2px solid var(--border);
+      background: var(--surface);
+      box-shadow: var(--shadow);
+      padding: 40px 48px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 16px;
+      max-width: 340px;
+      text-align: center;
+    }
+    .spinner {
+      width: 48px; height: 48px;
+      border: 3px solid rgba(26,21,16,0.15);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin 0.9s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .processing-steps { list-style: none; display: flex; flex-direction: column; gap: 8px; text-align: left; width: 100%; }
+    .processing-step {
+      font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em;
+      color: rgba(26,21,16,0.3);
+      display: flex; align-items: center; gap: 8px; transition: color 0.3s;
+    }
+    .processing-step.done   { color: #16a34a; }
+    .processing-step.active { color: var(--accent); }
+    .step-dot { width: 8px; height: 8px; border-radius: 50%; background: currentColor; flex-shrink: 0; }
+
+    /* ─── RESULTS ─── */
+    .results-inner { max-width: 680px; width: 100%; }
+    .taste-id-badge {
+      display: flex; align-items: center; gap: 12px;
+      padding: 12px 16px;
+      border: 2px solid var(--border);
+      background: var(--surface);
+      box-shadow: var(--shadow-sm);
+      margin-bottom: 20px; width: fit-content;
+    }
+    .badge-icon { font-size: 20px; }
+    .badge-text { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; }
+    .badge-sub  { font-size: 10px; color: var(--muted); font-weight: 500; }
+
+    .taste-dims {
+      display: grid; grid-template-columns: 1fr 1fr;
+      gap: 10px 24px; width: 100%; margin-bottom: 28px;
+    }
+    .dim-row { display: flex; flex-direction: column; gap: 4px; }
+    .dim-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; display: flex; justify-content: space-between; }
+    .dim-score { color: var(--accent); }
+    .dim-track { height: 6px; background: var(--bg); border: 1.5px solid rgba(26,21,16,0.2); }
+    .dim-fill  { height: 100%; background: var(--accent); transition: width 1s ease; }
+
+    .results-list { display: flex; flex-direction: column; gap: 12px; width: 100%; }
+    .result-card { border: 2px solid var(--border); background: var(--surface); box-shadow: var(--shadow-sm); overflow: hidden; transition: transform 0.12s, box-shadow 0.12s; }
+    .result-card:hover { transform: translate(-2px,-2px); box-shadow: var(--shadow); }
+    .result-inner { display: flex; align-items: stretch; }
+    .result-rank { width: 48px; background: var(--bg); border-right: 2px solid var(--border); display: flex; align-items: center; justify-content: center; font-size: 20px; font-weight: 900; color: var(--muted); flex-shrink: 0; }
+    .result-rank.top1 { background: var(--accent); color: #fff; font-size: 24px; }
+    .result-body { padding: 14px 16px; flex: 1; min-width: 0; }
+    .result-name { font-size: 16px; font-weight: 900; text-transform: uppercase; letter-spacing: -0.01em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .result-meta { font-size: 11px; color: var(--muted); font-weight: 500; margin-top: 4px; }
+    .result-tags { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 8px; }
+    .result-tag { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em; border: 1.5px solid var(--border); padding: 2px 7px; background: var(--bg); }
+    .result-score { padding: 14px 16px; display: flex; align-items: center; border-left: 2px solid var(--border); flex-shrink: 0; }
+    .score-pill { background: var(--accent); color: #fff; font-size: 14px; font-weight: 900; padding: 6px 12px; border: 2px solid var(--border); }
+
+    .error-box { border: 2px solid #dc2626; background: #fef2f2; padding: 16px 20px; width: 100%; }
+    .error-box p { font-size: 13px; font-weight: 500; color: #991b1b; }
+
+    /* ─── WHY THIS WORKS ─── */
+    .why-inner { max-width: 640px; width: 100%; }
+    .why-intro { font-size: 14px; color: var(--muted); font-weight: 500; line-height: 1.6; margin-bottom: 28px; }
+
+    .accordion { display: flex; flex-direction: column; gap: 0; width: 100%; margin-bottom: 32px; }
+    .accordion-item { border: 2px solid var(--border); border-bottom: none; }
+    .accordion-item:last-child { border-bottom: 2px solid var(--border); }
+
+    .accordion-head {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 16px 20px;
+      cursor: pointer;
+      background: var(--surface);
+      transition: background 0.15s;
+      gap: 12px;
+      border: none; width: 100%; font-family: var(--font); text-align: left;
+    }
+    .accordion-head:hover { background: var(--bg); }
+    .accordion-head.open  { background: var(--bg); }
+
+    .accordion-title {
+      font-size: 13px; font-weight: 900; text-transform: uppercase;
+      letter-spacing: 0.04em; display: flex; align-items: center; gap: 10px;
+    }
+    .accordion-icon { font-size: 18px; }
+    .accordion-arrow { font-size: 12px; color: var(--muted); transition: transform 0.25s; flex-shrink: 0; }
+    .accordion-head.open .accordion-arrow { transform: rotate(180deg); }
+
+    .accordion-body {
+      display: none;
+      padding: 0 20px 20px;
+      background: var(--bg);
+      border-top: 1.5px solid rgba(26,21,16,0.15);
+    }
+    .accordion-body.open { display: block; animation: fadeUp 0.2s ease; }
+    .accordion-body p { font-size: 13px; font-weight: 500; color: var(--muted); line-height: 1.7; margin-top: 12px; }
+    .accordion-body p + p { margin-top: 8px; }
+    .accordion-body strong { color: var(--text); font-weight: 700; }
+
+    .duel-breakdown { width: 100%; margin-top: 12px; display: flex; flex-direction: column; gap: 8px; }
+    .duel-row {
+      display: flex; gap: 12px; align-items: flex-start;
+      padding: 10px 12px;
+      border: 1.5px solid rgba(26,21,16,0.15);
+      background: var(--surface);
+    }
+    .duel-row-num { font-size: 11px; font-weight: 900; color: var(--accent); min-width: 20px; }
+    .duel-row-pair { font-size: 13px; font-weight: 700; flex: 1; }
+    .duel-row-dim { font-size: 11px; color: var(--muted); font-weight: 500; }
+
+    .cite-list { margin-top: 12px; display: flex; flex-direction: column; gap: 8px; }
+    .cite-item {
+      padding: 10px 14px;
+      border-left: 3px solid var(--accent);
+      background: var(--surface);
+      border-top: 1px solid rgba(26,21,16,0.1);
+      border-right: 1px solid rgba(26,21,16,0.1);
+      border-bottom: 1px solid rgba(26,21,16,0.1);
+    }
+    .cite-title { font-size: 12px; font-weight: 700; margin-bottom: 2px; }
+    .cite-meta  { font-size: 11px; color: var(--muted); font-weight: 500; }
+
+    /* ════════════════════════════════════════════
+       THE DUEL — CORE STYLES
+    ════════════════════════════════════════════ */
+
+    /* Full-viewport duel wrapper */
+    #screen-duel {
+      flex-direction: column;
+      position: fixed;
+      inset: 0;
+      overflow: hidden;
+    }
+
+    /* ─ Progress bar segments ─ */
+    .duel-progress {
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 4px;
+      display: flex;
+      z-index: 30;
+      pointer-events: none;
+    }
+    .duel-seg {
+      flex: 1;
+      background: rgba(255,255,255,0.2);
+      transition: background 0.3s;
+    }
+    .duel-seg + .duel-seg { border-left: 1px solid rgba(0,0,0,0.15); }
+    .duel-seg.done   { background: var(--accent); }
+    .duel-seg.active { background: rgba(255,255,255,0.55); }
+
+    /* ─ Duel counter ─ */
+    .duel-counter {
+      position: absolute;
+      top: 12px; left: 50%;
+      transform: translateX(-50%);
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: rgba(255,255,255,0.75);
+      z-index: 30;
+      text-shadow: 0 1px 4px rgba(0,0,0,0.4);
+      pointer-events: none;
+      white-space: nowrap;
+    }
+
+    /* ─ The question label ─ */
+    .duel-question {
+      position: absolute;
+      bottom: calc(50% + 10px);
+      left: 50%;
+      transform: translateX(-50%);
+      background: var(--bg);
+      border: 2px solid var(--border);
+      box-shadow: var(--shadow-sm);
+      padding: 6px 16px;
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      white-space: nowrap;
+      z-index: 30;
+      pointer-events: none;
+      transition: opacity 0.2s;
+    }
+
+    /* ─ Arena (flex split) ─ */
+    .duel-arena {
+      display: flex;
+      width: 100%;
+      height: 100%;
+      position: relative;
+    }
+
+    /* ─ Each side ─ */
+    .duel-side {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      position: relative;
+      overflow: hidden;
+      transition: flex 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+      user-select: none;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .duel-side-bg {
+      position: absolute;
+      inset: 0;
+      /* gradient set via inline style */
+      transition: opacity 0.3s;
+    }
+
+    /* Hover shimmer on desktop */
+    @media (hover: hover) {
+      .duel-side:hover .duel-side-overlay { opacity: 1; }
+    }
+    .duel-side-overlay {
+      position: absolute;
+      inset: 0;
+      background: rgba(255,255,255,0.06);
+      opacity: 0;
+      transition: opacity 0.2s;
+      pointer-events: none;
+    }
+
+    .duel-side.chosen   { flex: 5; pointer-events: none; }
+    .duel-side.rejected { flex: 0; pointer-events: none; overflow: hidden; }
+
+    /* ─ Content inside each side ─ */
+    .duel-content {
+      position: relative;
+      z-index: 2;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 16px;
+      padding: 24px 16px;
+      pointer-events: none;
+      min-width: 120px;
+    }
+
+    .duel-emoji {
+      font-size: clamp(56px, 12vw, 96px);
+      line-height: 1;
+      filter: drop-shadow(0 6px 16px rgba(0,0,0,0.35));
+      transition: transform 0.3s;
+    }
+    .duel-side:hover .duel-emoji { transform: scale(1.06); }
+
+    .duel-name {
+      font-size: clamp(14px, 2.5vw, 20px);
+      font-weight: 900;
+      text-transform: uppercase;
+      letter-spacing: -0.01em;
+      color: #fff;
+      text-shadow: 0 2px 8px rgba(0,0,0,0.55);
+      text-align: center;
+      line-height: 1.15;
+    }
+
+    .duel-tap {
+      font-size: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: rgba(255,255,255,0.65);
+      border: 1.5px solid rgba(255,255,255,0.35);
+      padding: 4px 12px;
+      pointer-events: none;
+    }
+
+    /* Chosen checkmark flash */
+    .duel-check {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(255,255,255,0.15);
+      opacity: 0;
+      font-size: 64px;
+      z-index: 5;
+      transition: opacity 0.15s;
+      pointer-events: none;
+    }
+    .duel-side.chosen .duel-check { opacity: 1; }
+
+    /* ─ VS divider line ─ */
+    .duel-divider {
+      position: absolute;
+      top: 0; bottom: 0;
+      left: 50%;
+      width: 2px;
+      background: rgba(26,21,16,0.6);
+      z-index: 20;
+      pointer-events: none;
+      transition: opacity 0.3s;
+    }
+    .duel-divider.hidden { opacity: 0; }
+
+    /* ─ VS badge ─ */
+    .vs-badge {
+      position: absolute;
+      top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      width: 54px; height: 54px;
+      background: var(--bg);
+      border: 3px solid var(--border);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 13px;
+      font-weight: 900;
+      letter-spacing: 0.04em;
+      z-index: 25;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.25);
+      pointer-events: none;
+      transition: opacity 0.25s, transform 0.25s;
+    }
+    .vs-badge.hidden { opacity: 0; transform: translate(-50%, -50%) scale(0.6); }
+
+    /* ─ Swipe hint ─ */
+    .swipe-hint {
+      position: absolute;
+      bottom: 20px; left: 50%;
+      transform: translateX(-50%);
+      font-size: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: rgba(255,255,255,0.5);
+      text-shadow: 0 1px 3px rgba(0,0,0,0.3);
+      z-index: 30;
+      pointer-events: none;
+      white-space: nowrap;
+    }
+
+  </style>
+</head>
+<body>
+
+<!-- ══════════════════════════════════════════════
+     SCREEN 0 — WELCOME
+══════════════════════════════════════════════ -->
+<div id="screen-welcome" class="screen scrollable active animate" style="align-items:center;justify-content:center;">
+  <div style="text-align:center;display:flex;flex-direction:column;align-items:center;max-width:440px;">
+    <div style="font-size:13px;font-weight:900;letter-spacing:0.25em;text-transform:uppercase;padding:8px 20px;border:2px solid var(--border);margin-bottom:48px;">
+      KA'ANA
+    </div>
+    <span class="label-tag">Version 2 — The Duel</span>
+    <h1>Two Options.<br/>One Winner.<br/>No Excuses.</h1>
+    <p class="subtitle" style="max-width:360px;text-align:center;">
+      The screen splits in two. Pick the option you'd rather eat right now.
+      8 matchups. No middle ground. 90 seconds.
+    </p>
+
+    <div style="display:flex;flex-direction:column;gap:10px;width:100%;margin-bottom:32px;">
+      <div style="display:flex;align-items:center;gap:12px;padding:12px 16px;border:2px solid var(--border);background:var(--surface);box-shadow:var(--shadow-sm);">
+        <span style="font-size:20px;">⚔️</span>
+        <span style="font-size:13px;font-weight:500;line-height:1.4;">
+          <strong>Split-screen battles</strong> — tap the side you prefer
+        </span>
+      </div>
+      <div style="display:flex;align-items:center;gap:12px;padding:12px 16px;border:2px solid var(--border);background:var(--surface);box-shadow:var(--shadow-sm);">
+        <span style="font-size:20px;">🚫</span>
+        <span style="font-size:13px;font-weight:500;line-height:1.4;">
+          <strong>No middle option</strong> — every choice is a real signal
+        </span>
+      </div>
+      <div style="display:flex;align-items:center;gap:12px;padding:12px 16px;border:2px solid var(--border);background:var(--surface);box-shadow:var(--shadow-sm);">
+        <span style="font-size:20px;">🎯</span>
+        <span style="font-size:13px;font-weight:500;line-height:1.4;">
+          <strong>8 controlled matchups</strong> — each one isolates a specific preference
+        </span>
+      </div>
+    </div>
+
+    <button class="btn btn-primary" onclick="startDuel()" style="font-size:14px;padding:16px 48px;width:100%;">
+      Start the Duel →
+    </button>
+    <a href="/selector.html" class="btn btn-ghost" style="margin-top:12px;">← Try Version 1 instead</a>
+    <p style="font-size:12px;color:var(--muted);margin-top:16px;">Takes about 90 seconds</p>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════
+     SCREEN 1 — DUEL ARENA (single screen, content swaps)
+══════════════════════════════════════════════ -->
+<div id="screen-duel" class="screen">
+
+  <!-- Progress segments (8 total) -->
+  <div class="duel-progress" id="duelProgress"></div>
+
+  <!-- Duel counter -->
+  <div class="duel-counter" id="duelCounter">Duel 1 of 8</div>
+
+  <!-- The question label (floats above divider) -->
+  <div class="duel-question" id="duelQuestion">Which sounds better right now?</div>
+
+  <!-- The arena -->
+  <div class="duel-arena" id="duelArena">
+
+    <!-- Left side -->
+    <div class="duel-side" id="sideLeft" onclick="pickSide('left')">
+      <div class="duel-side-bg" id="bgLeft"></div>
+      <div class="duel-side-overlay"></div>
+      <div class="duel-content">
+        <span class="duel-emoji" id="emojiLeft">🫐</span>
+        <span class="duel-name" id="nameLeft">Açaí Bowl</span>
+        <span class="duel-tap">Tap to pick</span>
+      </div>
+      <div class="duel-check">✓</div>
+    </div>
+
+    <!-- VS divider + badge -->
+    <div class="duel-divider" id="duelDivider"></div>
+    <div class="vs-badge" id="vsBadge">VS</div>
+    <span class="swipe-hint" id="swipeHint">← tap either side →</span>
+
+    <!-- Right side -->
+    <div class="duel-side" id="sideRight" onclick="pickSide('right')">
+      <div class="duel-side-bg" id="bgRight"></div>
+      <div class="duel-side-overlay"></div>
+      <div class="duel-content">
+        <span class="duel-emoji" id="emojiRight">🍖</span>
+        <span class="duel-name" id="nameRight">BBQ Ribs</span>
+        <span class="duel-tap">Tap to pick</span>
+      </div>
+      <div class="duel-check">✓</div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════
+     SCREEN 2 — DIETARY
+══════════════════════════════════════════════ -->
+<div id="screen-dietary" class="screen scrollable animate">
+  <div style="max-width:480px;width:100%;display:flex;flex-direction:column;align-items:flex-start;">
+    <span class="label-tag">Almost there — 1 of 3</span>
+    <h2>Any must-knows?</h2>
+    <p class="subtitle">Select everything that applies.</p>
+    <div class="constraint-grid" id="dietaryGrid"></div>
+    <div class="nav-row">
+      <button class="btn btn-ghost" onclick="goScreen('duel')">← Redo duels</button>
+      <button class="btn btn-primary" onclick="goScreen('budget')">Next →</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════
+     SCREEN 3 — BUDGET
+══════════════════════════════════════════════ -->
+<div id="screen-budget" class="screen scrollable animate">
+  <div style="max-width:480px;width:100%;display:flex;flex-direction:column;align-items:flex-start;">
+    <span class="label-tag">Almost there — 2 of 3</span>
+    <h2>Budget vibe?</h2>
+    <p class="subtitle">Per person, drinks included.</p>
+    <div class="budget-grid" id="budgetGrid"></div>
+    <div class="nav-row">
+      <button class="btn btn-ghost" onclick="goScreen('dietary')">← Back</button>
+      <button class="btn btn-primary" id="budgetNextBtn" onclick="goScreen('island')"
+              style="opacity:0.4;cursor:not-allowed;" disabled>Next →</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════
+     SCREEN 4 — ISLAND
+══════════════════════════════════════════════ -->
+<div id="screen-island" class="screen scrollable animate">
+  <div style="max-width:480px;width:100%;display:flex;flex-direction:column;align-items:flex-start;">
+    <span class="label-tag">Almost there — 3 of 3</span>
+    <h2>Which island?</h2>
+    <p class="subtitle">We'll only show restaurants you can reach.</p>
+    <div class="island-grid" id="islandGrid"></div>
+    <div class="nav-row">
+      <button class="btn btn-ghost" onclick="goScreen('budget')">← Back</button>
+      <button class="btn btn-primary" id="islandNextBtn" onclick="buildTasteID()"
+              style="opacity:0.4;cursor:not-allowed;" disabled>
+        Build My Taste ID →
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════
+     SCREEN 5 — PROCESSING
+══════════════════════════════════════════════ -->
+<div id="screen-processing" class="screen" style="align-items:center;justify-content:center;">
+  <div class="processing-box">
+    <div class="spinner"></div>
+    <div>
+      <div style="font-size:14px;font-weight:900;text-transform:uppercase;letter-spacing:0.04em;margin-bottom:4px;">
+        Building Your<br/>Taste ID
+      </div>
+      <div style="font-size:11px;color:var(--muted);font-weight:500;">Just a moment…</div>
+    </div>
+    <ul class="processing-steps" id="processingSteps">
+      <li class="processing-step" id="pstep-1"><span class="step-dot"></span>Analysing duel results</li>
+      <li class="processing-step" id="pstep-2"><span class="step-dot"></span>Weighing preference signals</li>
+      <li class="processing-step" id="pstep-3"><span class="step-dot"></span>Generating taste vector</li>
+      <li class="processing-step" id="pstep-4"><span class="step-dot"></span>Querying restaurant index</li>
+      <li class="processing-step" id="pstep-5"><span class="step-dot"></span>Ranking matches</li>
+    </ul>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════
+     SCREEN 6 — RESULTS
+══════════════════════════════════════════════ -->
+<div id="screen-results" class="screen scrollable animate">
+  <div class="results-inner">
+
+    <div style="border-bottom:2px solid var(--border);padding-bottom:20px;margin-bottom:24px;margin-top:8px;">
+      <div class="taste-id-badge">
+        <span class="badge-icon">🧬</span>
+        <div>
+          <div class="badge-text">Your Taste ID is ready</div>
+          <div class="badge-sub" id="badgeSub">Built from 8 duels</div>
+        </div>
+      </div>
+
+      <h2>Your Top Matches</h2>
+      <p style="font-size:13px;color:var(--muted);font-weight:500;margin-bottom:16px;">
+        Ranked by how well they fit the preferences you revealed.
+      </p>
+
+      <div class="taste-dims" id="tasteDims"></div>
+
+      <div style="display:flex;gap:10px;flex-wrap:wrap;">
+        <button class="btn btn-outline" onclick="goScreen('why')" style="font-size:12px;padding:10px 20px;">
+          🔬 See the Science →
+        </button>
+        <button class="btn btn-ghost" onclick="location.href='/selector.html'" style="font-size:12px;">
+          ← Try Version 1
+        </button>
+      </div>
+    </div>
+
+    <div class="results-list" id="resultsList">
+      <p style="font-size:13px;color:var(--muted);">Loading…</p>
+    </div>
+
+    <div style="height:40px;"></div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════
+     SCREEN 7 — WHY THIS WORKS
+══════════════════════════════════════════════ -->
+<div id="screen-why" class="screen scrollable animate">
+  <div class="why-inner">
+    <span class="label-tag" style="margin-top:8px;">Methodology</span>
+    <h2>Why This Works</h2>
+    <p class="why-intro">
+      Every choice you made was a controlled experiment. Here's the science behind
+      what we measured and why we measured it this way.
+    </p>
+
+    <div class="accordion">
+
+      <!-- 1 -->
+      <div class="accordion-item">
+        <button class="accordion-head" onclick="toggleAccordion(this)">
+          <span class="accordion-title">
+            <span class="accordion-icon">⚔️</span>
+            Why comparisons instead of ratings?
+          </span>
+          <span class="accordion-arrow">▼</span>
+        </button>
+        <div class="accordion-body">
+          <p>
+            When you ask someone to rate something on a scale, you get <strong>response bias</strong> —
+            most people cluster around 7/10 to appear balanced. Nobody says "I'm a 3 out of 10 for adventurousness"
+            even if that's true.
+          </p>
+          <p>
+            Forced pairwise comparison removes this entirely. When you <em>have to choose</em> between
+            a Spicy Curry and a Margherita Pizza right now, your real preference emerges.
+            There's no safe middle. This is called <strong>revealed preference theory</strong> —
+            the idea that what people choose under constraint is far more truthful than what they say they prefer.
+          </p>
+          <p>
+            This is the same method used in <strong>conjoint analysis</strong>, the gold standard in
+            academic marketing and food science research for measuring attribute importance.
+          </p>
+        </div>
+      </div>
+
+      <!-- 2 -->
+      <div class="accordion-item">
+        <button class="accordion-head" onclick="toggleAccordion(this)">
+          <span class="accordion-title">
+            <span class="accordion-icon">🎯</span>
+            What did each duel actually measure?
+          </span>
+          <span class="accordion-arrow">▼</span>
+        </button>
+        <div class="accordion-body">
+          <p>Each matchup was a <strong>controlled experiment</strong> — the two options differ sharply
+          on exactly one preference dimension, so your choice isolates that dimension cleanly.</p>
+          <div class="duel-breakdown">
+            <div class="duel-row">
+              <span class="duel-row-num">1</span>
+              <div>
+                <div class="duel-row-pair">🫐 Açaí Bowl vs. 🍖 BBQ Ribs</div>
+                <div class="duel-row-dim">Health orientation — do you eat to nourish or to indulge?</div>
+              </div>
+            </div>
+            <div class="duel-row">
+              <span class="duel-row-num">2</span>
+              <div>
+                <div class="duel-row-pair">🐟 Fine Dining vs. 🌮 Street Tacos</div>
+                <div class="duel-row-dim">Price willingness + dining format — premium sit-down vs. casual eat-and-go</div>
+              </div>
+            </div>
+            <div class="duel-row">
+              <span class="duel-row-num">3</span>
+              <div>
+                <div class="duel-row-pair">🍛 Spicy Curry vs. 🍕 Margherita Pizza</div>
+                <div class="duel-row-dim">Adventurousness + spice tolerance — bold exploration vs. safe classics</div>
+              </div>
+            </div>
+            <div class="duel-row">
+              <span class="duel-row-num">4</span>
+              <div>
+                <div class="duel-row-pair">🔥 Korean BBQ vs. 🍜 Solo Ramen</div>
+                <div class="duel-row-dim">Social context — communal group eating vs. solo focused meal</div>
+              </div>
+            </div>
+            <div class="duel-row">
+              <span class="duel-row-num">5</span>
+              <div>
+                <div class="duel-row-pair">🐠 Hawaiian Poke vs. 🍝 Pasta Carbonara</div>
+                <div class="duel-row-dim">Local engagement — authentic island flavours vs. global comfort food</div>
+              </div>
+            </div>
+            <div class="duel-row">
+              <span class="duel-row-num">6</span>
+              <div>
+                <div class="duel-row-pair">🦪 Fresh Oysters vs. 🍔 Cheeseburger</div>
+                <div class="duel-row-dim">Acquired taste + price cross-check — refines adventurousness &amp; price signals</div>
+              </div>
+            </div>
+            <div class="duel-row">
+              <span class="duel-row-num">7</span>
+              <div>
+                <div class="duel-row-pair">🌅 Beach Bar vs. 🕯️ Candlelit Table</div>
+                <div class="duel-row-dim">Atmosphere + formality — relaxed outdoor vs. intimate elegant</div>
+              </div>
+            </div>
+            <div class="duel-row">
+              <span class="duel-row-num">8</span>
+              <div>
+                <div class="duel-row-pair">🛖 Busy Food Market vs. 🌿 Garden Terrace</div>
+                <div class="duel-row-dim">Noise preference + social density — buzzing crowd vs. calm setting</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 3 -->
+      <div class="accordion-item">
+        <button class="accordion-head" onclick="toggleAccordion(this)">
+          <span class="accordion-title">
+            <span class="accordion-icon">🧮</span>
+            How did we turn 8 choices into a profile?
+          </span>
+          <span class="accordion-arrow">▼</span>
+        </button>
+        <div class="accordion-body">
+          <p>
+            Every dish and scene in the system has a <strong>pre-assigned signal vector</strong> — 8 numbers,
+            one for each taste dimension, scored 0–10 by food researchers and refined through testing.
+          </p>
+          <p>
+            When you pick a winner, that item's signals are weighted at <strong>+1.0</strong>.
+            The loser's signals are weighted at <strong>−0.4</strong> (softer than a full penalty, because
+            a relative "I prefer the other one" is not the same as "I hate this").
+          </p>
+          <p>
+            We sum all the weighted signals across all 8 duels, divide by total weight, and normalise
+            the result to a 0–10 scale. The final 8-number profile is your <strong>Taste ID</strong>.
+          </p>
+          <p>
+            The weighting asymmetry (positive heavier than negative) is intentional — based on
+            the <strong>loss aversion</strong> literature, negative food signals tend to be overcalibrated
+            compared to positive ones, so we soften them slightly.
+          </p>
+        </div>
+      </div>
+
+      <!-- 4 -->
+      <div class="accordion-item">
+        <button class="accordion-head" onclick="toggleAccordion(this)">
+          <span class="accordion-title">
+            <span class="accordion-icon">📐</span>
+            What do the 8 dimensions mean?
+          </span>
+          <span class="accordion-arrow">▼</span>
+        </button>
+        <div class="accordion-body">
+          <p><strong>Adventurousness</strong> — willingness to try unfamiliar cuisines, unusual ingredients, or challenging preparations.</p>
+          <p><strong>Spice Tolerance</strong> — genuine preference for heat and bold, sharp flavours vs. mild and aromatic.</p>
+          <p><strong>Health Orientation</strong> — whether food choices are driven by nutrition and freshness vs. comfort and indulgence.</p>
+          <p><strong>Flavor Complexity</strong> — preference for layered, nuanced dishes vs. clean, simple, familiar flavour profiles.</p>
+          <p><strong>Price Willingness</strong> — comfort with higher per-person spend when the experience justifies it.</p>
+          <p><strong>Social Context</strong> — whether eating is a shared communal event or a personal, focused experience.</p>
+          <p><strong>Local Engagement</strong> — preference for authentic local Hawaiian food and culture over international chains.</p>
+          <p><strong>Format Preference</strong> — formal sit-down dining with plated courses vs. casual, walk-around, or sharing-plate formats.</p>
+        </div>
+      </div>
+
+      <!-- 5 -->
+      <div class="accordion-item">
+        <button class="accordion-head" onclick="toggleAccordion(this)">
+          <span class="accordion-title">
+            <span class="accordion-icon">🔬</span>
+            Academic research behind this approach
+          </span>
+          <span class="accordion-arrow">▼</span>
+        </button>
+        <div class="accordion-body">
+          <p>This system draws on several peer-reviewed research streams:</p>
+          <div class="cite-list">
+            <div class="cite-item">
+              <div class="cite-title">Conjoint Analysis &amp; Pairwise Preference Elicitation</div>
+              <div class="cite-meta">Green &amp; Srinivasan (1978, 1990) — the foundational framework showing pairwise comparison outperforms direct rating for preference measurement. Replicated extensively in food science and consumer research.</div>
+            </div>
+            <div class="cite-item">
+              <div class="cite-title">Customer Restaurant Choice: An Empirical Analysis</div>
+              <div class="cite-meta">Chua et al. (2020), PMC7503372 — establishes food quality (25.2%), price (16.4%), service (15%) and atmosphere (13.1%) as the top 4 restaurant selection criteria. Confirms occasion type reorganises all other weights.</div>
+            </div>
+            <div class="cite-item">
+              <div class="cite-title">Food Neophobia Scale</div>
+              <div class="cite-meta">Pliner &amp; Hobden (1992) — validated 10-item scale measuring trait-level willingness to try new foods. The "adventurousness" dimension in this system is directly grounded in their instrument.</div>
+            </div>
+            <div class="cite-item">
+              <div class="cite-title">Asking Clarifying Questions for Preference Elicitation with LLMs</div>
+              <div class="cite-meta">arXiv:2510.12015 (2025) — active learning approach to minimum-question preference capture. Supports the design principle of each question maximising information gain.</div>
+            </div>
+            <div class="cite-item">
+              <div class="cite-title">Active Learning for Cold-Start Recommender Systems</div>
+              <div class="cite-meta">Nature Scientific Reports (2025) — confirms that 8–12 carefully selected items capture 80%+ of the preference signal achievable from unlimited data. Validates the 8-duel design.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 6 -->
+      <div class="accordion-item">
+        <button class="accordion-head" onclick="toggleAccordion(this)">
+          <span class="accordion-title">
+            <span class="accordion-icon">🆚</span>
+            How does this compare to Version 1?
+          </span>
+          <span class="accordion-arrow">▼</span>
+        </button>
+        <div class="accordion-body">
+          <p>
+            <strong>Version 1 (Tasting Table)</strong> uses absolute ratings — you react to each dish independently.
+            This captures a richer reaction (want / not tonight / never) and the scene selection adds explicit
+            contextual signal upfront. Better for users who want to browse and reflect.
+          </p>
+          <p>
+            <strong>Version 2 (The Duel)</strong> uses relative comparison — forced choice eliminates
+            response bias and produces crisper preference signals. Faster. More game-like. Better for users
+            who want a quick, decisive experience.
+          </p>
+          <p>
+            In testing, V2 tends to produce <strong>more extreme profiles</strong> — higher scores on
+            the dimensions the user clearly prefers, lower on the rest. V1 tends to produce
+            <strong>more balanced profiles</strong> because the three-state system captures nuance.
+            Neither is objectively better — they measure the same thing with different instruments.
+          </p>
+        </div>
+      </div>
+
+    </div><!-- /accordion -->
+
+    <div style="display:flex;gap:10px;flex-wrap:wrap;">
+      <button class="btn btn-primary" onclick="goScreen('results')" style="font-size:12px;padding:12px 24px;">
+        ← Back to Results
+      </button>
+      <a class="btn btn-outline" href="/selector.html" style="font-size:12px;padding:12px 24px;">
+        Try Version 1
+      </a>
+    </div>
+
+    <div style="height:48px;"></div>
+  </div>
+</div>
+
+
+<!-- ══════════════════════════════════════════════
+     JAVASCRIPT ENGINE
+══════════════════════════════════════════════ -->
+<script>
+
+/* ─── DUEL DATA ─── */
+const DUELS = [
+  {
+    label: 'Which sounds better right now?',
+    left: {
+      name: 'Açaí Bowl', emoji: '🫐', gradient: ['#4A1572','#A855B5'],
+      signals: { adventurousness:3, spice_tolerance:1, health_orientation:9, flavor_complexity:4,
+                 price_orientation:4, social_context:3, local_engagement:6, format_preference:4 }
+    },
+    right: {
+      name: 'BBQ Ribs', emoji: '🍖', gradient: ['#8B2500','#C44B1C'],
+      signals: { adventurousness:3, spice_tolerance:4, health_orientation:1, flavor_complexity:5,
+                 price_orientation:4, social_context:7, local_engagement:5, format_preference:3 }
+    }
+  },
+  {
+    label: 'Pick your vibe tonight',
+    left: {
+      name: 'Fine Dining', emoji: '🐟', gradient: ['#0F4C75','#1B6CA8'],
+      signals: { adventurousness:5, spice_tolerance:2, health_orientation:6, flavor_complexity:8,
+                 price_orientation:9, social_context:3, local_engagement:5, format_preference:9 }
+    },
+    right: {
+      name: 'Street Tacos', emoji: '🌮', gradient: ['#D97706','#F59E0B'],
+      signals: { adventurousness:7, spice_tolerance:6, health_orientation:4, flavor_complexity:6,
+                 price_orientation:2, social_context:6, local_engagement:7, format_preference:1 }
+    }
+  },
+  {
+    label: "What are you feeling?",
+    left: {
+      name: 'Spicy Curry', emoji: '🍛', gradient: ['#B45309','#EF8C1A'],
+      signals: { adventurousness:8, spice_tolerance:8, health_orientation:5, flavor_complexity:9,
+                 price_orientation:4, social_context:5, local_engagement:7, format_preference:3 }
+    },
+    right: {
+      name: 'Margherita Pizza', emoji: '🍕', gradient: ['#991B1B','#16A34A'],
+      signals: { adventurousness:2, spice_tolerance:2, health_orientation:3, flavor_complexity:4,
+                 price_orientation:4, social_context:5, local_engagement:2, format_preference:5 }
+    }
+  },
+  {
+    label: 'How do you want to eat?',
+    left: {
+      name: 'Korean BBQ', emoji: '🔥', gradient: ['#991B1B','#DC2626'],
+      signals: { adventurousness:6, spice_tolerance:6, health_orientation:3, flavor_complexity:6,
+                 price_orientation:5, social_context:9, local_engagement:5, format_preference:3 }
+    },
+    right: {
+      name: 'Solo Ramen', emoji: '🍜', gradient: ['#78350F','#B45309'],
+      signals: { adventurousness:5, spice_tolerance:5, health_orientation:3, flavor_complexity:7,
+                 price_orientation:4, social_context:1, local_engagement:4, format_preference:5 }
+    }
+  },
+  {
+    label: 'What calls to you?',
+    left: {
+      name: 'Hawaiian Poke', emoji: '🐠', gradient: ['#0E7490','#22D3EE'],
+      signals: { adventurousness:5, spice_tolerance:3, health_orientation:7, flavor_complexity:5,
+                 price_orientation:5, social_context:4, local_engagement:9, format_preference:4 }
+    },
+    right: {
+      name: 'Pasta Carbonara', emoji: '🍝', gradient: ['#78350F','#D97706'],
+      signals: { adventurousness:3, spice_tolerance:1, health_orientation:3, flavor_complexity:6,
+                 price_orientation:5, social_context:5, local_engagement:2, format_preference:5 }
+    }
+  },
+  {
+    label: 'Be honest — which one?',
+    left: {
+      name: 'Fresh Oysters', emoji: '🦪', gradient: ['#374151','#6B7280'],
+      signals: { adventurousness:7, spice_tolerance:2, health_orientation:5, flavor_complexity:6,
+                 price_orientation:8, social_context:5, local_engagement:4, format_preference:8 }
+    },
+    right: {
+      name: 'Cheeseburger', emoji: '🍔', gradient: ['#92400E','#D97706'],
+      signals: { adventurousness:1, spice_tolerance:2, health_orientation:1, flavor_complexity:2,
+                 price_orientation:2, social_context:5, local_engagement:2, format_preference:2 }
+    }
+  },
+  {
+    label: 'Pick the setting',
+    left: {
+      name: 'Beach Bar', emoji: '🌅', gradient: ['#F59E0B','#EF4444'],
+      signals: { adventurousness:4, spice_tolerance:3, health_orientation:4, flavor_complexity:4,
+                 price_orientation:2, social_context:7, local_engagement:7, format_preference:2 }
+    },
+    right: {
+      name: 'Candlelit Table', emoji: '🕯️', gradient: ['#7C2D12','#B91C1C'],
+      signals: { adventurousness:5, spice_tolerance:2, health_orientation:5, flavor_complexity:7,
+                 price_orientation:8, social_context:2, local_engagement:4, format_preference:8 }
+    }
+  },
+  {
+    label: 'Last one — your ideal backdrop',
+    left: {
+      name: 'Busy Food Market', emoji: '🛖', gradient: ['#065F46','#059669'],
+      signals: { adventurousness:7, spice_tolerance:5, health_orientation:4, flavor_complexity:6,
+                 price_orientation:2, social_context:8, local_engagement:8, format_preference:1 }
+    },
+    right: {
+      name: 'Garden Terrace', emoji: '🌿', gradient: ['#1D4ED8','#3B82F6'],
+      signals: { adventurousness:4, spice_tolerance:2, health_orientation:6, flavor_complexity:5,
+                 price_orientation:6, social_context:3, local_engagement:5, format_preference:6 }
+    }
+  }
+];
+
+const DIETARY_OPTIONS = [
+  { id:'none',        label:'No Restrictions', emoji:'✅' },
+  { id:'vegetarian',  label:'Vegetarian',       emoji:'🥦' },
+  { id:'vegan',       label:'Vegan',            emoji:'🌱' },
+  { id:'gluten_free', label:'Gluten-Free',      emoji:'🌾' },
+  { id:'halal',       label:'Halal',            emoji:'☪️'  },
+  { id:'kosher',      label:'Kosher',           emoji:'✡️'  },
+  { id:'shellfish',   label:'No Shellfish',     emoji:'🦞' },
+  { id:'dairy_free',  label:'Dairy-Free',       emoji:'🥛' },
+  { id:'nut_allergy', label:'Nut Allergy',      emoji:'🥜' },
+];
+
+const BUDGET_OPTIONS = [
+  { id:'budget',   price:'$',    label:'Casual',   range:'Under $20 / person' },
+  { id:'moderate', price:'$$',   label:'Everyday', range:'$20–$50 / person'   },
+  { id:'upscale',  price:'$$$',  label:'Special',  range:'$50–$100 / person'  },
+  { id:'luxury',   price:'$$$$', label:'Splurge',  range:'$100+ / person'     },
+];
+
+const ISLAND_OPTIONS = [
+  { id:'oahu',       label:"O'ahu",     emoji:'🌺' },
+  { id:'maui',       label:'Maui',      emoji:'🌊' },
+  { id:'big_island', label:'Big Island',emoji:'🌋' },
+  { id:'kauai',      label:"Kaua'i",    emoji:'🌿' },
+  { id:'molokai',    label:"Moloka'i",  emoji:'🐠' },
+  { id:'lanai',      label:"Lāna'i",    emoji:'🦋' },
+];
+
+const BUDGET_PRICE = { budget:1, moderate:2, upscale:3, luxury:4 };
+
+const DIM_LABELS = {
+  adventurousness:    'Adventurousness',
+  spice_tolerance:    'Spice Tolerance',
+  health_orientation: 'Health Focus',
+  flavor_complexity:  'Flavor Complexity',
+  price_orientation:  'Price Willingness',
+  social_context:     'Social Energy',
+  local_engagement:   'Local Engagement',
+  format_preference:  'Dining Format',
+};
+
+/* ─── STATE ─── */
+const state = {
+  duelResults: [],   // [{ winner: side-obj, loser: side-obj }, ...]
+  dietary: new Set(),
+  budget: null,
+  island: null,
+  tasteScores: {},
+};
+
+let currentDuel = 0;
+let picking = false;  // debounce flag
+
+/* ─── SCREEN NAVIGATION ─── */
+function goScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => {
+    s.classList.remove('active', 'animate');
+  });
+  const el = document.getElementById('screen-' + id);
+  el.classList.add('active');
+  // Trigger animation on next frame so transition fires
+  requestAnimationFrame(() => requestAnimationFrame(() => el.classList.add('animate')));
+  window.scrollTo(0, 0);
+}
+
+/* ─── BUILD DUEL PROGRESS ─── */
+function buildProgress() {
+  const bar = document.getElementById('duelProgress');
+  bar.innerHTML = '';
+  for (let i = 0; i < DUELS.length; i++) {
+    const seg = document.createElement('div');
+    seg.className = 'duel-seg';
+    seg.id = 'seg-' + i;
+    bar.appendChild(seg);
+  }
+}
+
+function updateProgress(index) {
+  DUELS.forEach((_, i) => {
+    const seg = document.getElementById('seg-' + i);
+    if (!seg) return;
+    seg.className = 'duel-seg' + (i < index ? ' done' : i === index ? ' active' : '');
+  });
+}
+
+/* ─── LOAD DUEL ─── */
+function loadDuel(index) {
+  if (index >= DUELS.length) {
+    // All duels done → dietary screen
+    goScreen('dietary');
+    return;
+  }
+
+  const duel = DUELS[index];
+
+  // Reset sides
+  const L = document.getElementById('sideLeft');
+  const R = document.getElementById('sideRight');
+  L.className = 'duel-side';
+  R.className = 'duel-side';
+
+  // Update labels
+  document.getElementById('duelCounter').textContent = `Duel ${index + 1} of ${DUELS.length}`;
+  document.getElementById('duelQuestion').textContent = duel.label;
+
+  // Update content
+  document.getElementById('emojiLeft').textContent  = duel.left.emoji;
+  document.getElementById('nameLeft').textContent   = duel.left.name;
+  document.getElementById('emojiRight').textContent = duel.right.emoji;
+  document.getElementById('nameRight').textContent  = duel.right.name;
+
+  // Backgrounds
+  document.getElementById('bgLeft').style.background =
+    `linear-gradient(160deg, ${duel.left.gradient[0]}, ${duel.left.gradient[1]})`;
+  document.getElementById('bgRight').style.background =
+    `linear-gradient(160deg, ${duel.right.gradient[0]}, ${duel.right.gradient[1]})`;
+
+  // Show divider + VS badge
+  document.getElementById('duelDivider').classList.remove('hidden');
+  document.getElementById('vsBadge').classList.remove('hidden');
+  document.getElementById('duelQuestion').style.opacity = '1';
+  document.getElementById('swipeHint').style.opacity = '1';
+
+  updateProgress(index);
+  picking = false;
+}
+
+/* ─── PICK A SIDE ─── */
+function pickSide(side) {
+  if (picking) return;
+  picking = true;
+
+  const duel = DUELS[currentDuel];
+  const winner = side === 'left' ? duel.left : duel.right;
+  const loser  = side === 'left' ? duel.right : duel.left;
+
+  state.duelResults.push({ winner, loser });
+
+  const L = document.getElementById('sideLeft');
+  const R = document.getElementById('sideRight');
+
+  // Expand chosen, collapse rejected
+  L.className = 'duel-side' + (side === 'left'  ? ' chosen' : ' rejected');
+  R.className = 'duel-side' + (side === 'right' ? ' chosen' : ' rejected');
+
+  // Hide VS badge + divider + question + hint
+  document.getElementById('vsBadge').classList.add('hidden');
+  document.getElementById('duelDivider').classList.add('hidden');
+  document.getElementById('duelQuestion').style.opacity = '0';
+  document.getElementById('swipeHint').style.opacity = '0';
+
+  // Mark progress segment done
+  const seg = document.getElementById('seg-' + currentDuel);
+  if (seg) seg.className = 'duel-seg done';
+
+  // Advance after animation
+  setTimeout(() => {
+    currentDuel++;
+    if (currentDuel < DUELS.length) {
+      // Fade: reset and load next
+      L.style.opacity = '0';
+      R.style.opacity = '0';
+      setTimeout(() => {
+        L.style.opacity = '1';
+        R.style.opacity = '1';
+        loadDuel(currentDuel);
+      }, 120);
+    } else {
+      goScreen('dietary');
+    }
+  }, 520);
+}
+
+/* ─── TOUCH / SWIPE SUPPORT ─── */
+let touchStartX = 0;
+document.getElementById('duelArena').addEventListener('touchstart', e => {
+  touchStartX = e.touches[0].clientX;
+}, { passive: true });
+document.getElementById('duelArena').addEventListener('touchend', e => {
+  const dx = e.changedTouches[0].clientX - touchStartX;
+  if (Math.abs(dx) > 40 && !picking) {
+    pickSide(dx > 0 ? 'left' : 'right');
+  }
+}, { passive: true });
+
+/* ─── START DUEL ─── */
+function startDuel() {
+  currentDuel = 0;
+  state.duelResults = [];
+  buildProgress();
+  loadDuel(0);
+  goScreen('duel');
+}
+
+/* ─── DIETARY GRID ─── */
+function buildDietaryGrid() {
+  const grid = document.getElementById('dietaryGrid');
+  DIETARY_OPTIONS.forEach(opt => {
+    const tile = document.createElement('button');
+    tile.className = 'constraint-tile';
+    tile.dataset.id = opt.id;
+    tile.innerHTML = `<span class="tile-emoji">${opt.emoji}</span><span class="tile-label">${opt.label}</span>`;
+    tile.addEventListener('click', () => toggleDietary(opt.id, tile));
+    grid.appendChild(tile);
+  });
+}
+
+function toggleDietary(id, tile) {
+  if (id === 'none') {
+    state.dietary.clear();
+    state.dietary.add('none');
+    document.querySelectorAll('#dietaryGrid .constraint-tile').forEach(t =>
+      t.classList.toggle('selected', t.dataset.id === 'none'));
+    return;
+  }
+  state.dietary.delete('none');
+  document.querySelector('#dietaryGrid [data-id="none"]')?.classList.remove('selected');
+  if (state.dietary.has(id)) { state.dietary.delete(id); tile.classList.remove('selected'); }
+  else { state.dietary.add(id); tile.classList.add('selected'); }
+  if (state.dietary.size === 0) {
+    state.dietary.add('none');
+    document.querySelector('#dietaryGrid [data-id="none"]')?.classList.add('selected');
+  }
+}
+
+/* ─── BUDGET GRID ─── */
+function buildBudgetGrid() {
+  const grid = document.getElementById('budgetGrid');
+  BUDGET_OPTIONS.forEach(opt => {
+    const tile = document.createElement('button');
+    tile.className = 'budget-tile';
+    tile.dataset.id = opt.id;
+    tile.innerHTML = `
+      <div class="budget-price">${opt.price}</div>
+      <div class="budget-label">${opt.label}</div>
+      <div class="budget-range">${opt.range}</div>`;
+    tile.addEventListener('click', () => {
+      state.budget = opt.id;
+      document.querySelectorAll('#budgetGrid .budget-tile').forEach(t =>
+        t.classList.toggle('selected', t.dataset.id === opt.id));
+      const btn = document.getElementById('budgetNextBtn');
+      btn.disabled = false;
+      btn.style.opacity = '1';
+      btn.style.cursor = 'pointer';
+    });
+    grid.appendChild(tile);
+  });
+}
+
+/* ─── ISLAND GRID ─── */
+function buildIslandGrid() {
+  const grid = document.getElementById('islandGrid');
+  ISLAND_OPTIONS.forEach(opt => {
+    const tile = document.createElement('button');
+    tile.className = 'constraint-tile';
+    tile.dataset.id = opt.id;
+    tile.innerHTML = `<span class="tile-emoji">${opt.emoji}</span><span class="tile-label">${opt.label}</span>`;
+    tile.addEventListener('click', () => {
+      state.island = opt.id;
+      document.querySelectorAll('#islandGrid .constraint-tile').forEach(t =>
+        t.classList.toggle('selected', t.dataset.id === opt.id));
+      const btn = document.getElementById('islandNextBtn');
+      btn.disabled = false;
+      btn.style.opacity = '1';
+      btn.style.cursor = 'pointer';
+    });
+    grid.appendChild(tile);
+  });
+}
+
+/* ─── SCORING ENGINE ─── */
+/*
+  Winner weight: +1.0
+  Loser weight:  -0.4  (softer than absolute rejection)
+  Raw score per dimension: weighted sum / total weight → approx -10 to +10
+  Map to 0-10: (raw + 10) / 2
+*/
+function computeTasteScores() {
+  const DIMS = Object.keys(DIM_LABELS);
+  const sums    = Object.fromEntries(DIMS.map(d => [d, 0]));
+  const weights = Object.fromEntries(DIMS.map(d => [d, 0]));
+
+  state.duelResults.forEach(({ winner, loser }) => {
+    DIMS.forEach(dim => {
+      const wSig = winner.signals[dim] ?? 5;
+      const lSig = loser.signals[dim]  ?? 5;
+      sums[dim]    += wSig * 1.0 + lSig * (-0.4);
+      weights[dim] += 1.0 + 0.4;  // total absolute weight
+    });
+  });
+
+  const scores = {};
+  DIMS.forEach(dim => {
+    const raw = weights[dim] > 0 ? sums[dim] / weights[dim] : 0;
+    scores[dim] = parseFloat(Math.max(0, Math.min(10, (raw + 10) / 2)).toFixed(2));
+  });
+
+  state.tasteScores = scores;
+  return scores;
+}
+
+function buildPayload(scores) {
+  let cuisine = 'Any';
+  if (scores.adventurousness >= 7) cuisine = 'International';
+  else if (scores.local_engagement >= 7) cuisine = 'Hawaiian';
+  else if (scores.adventurousness >= 5) cuisine = 'Asian';
+  else cuisine = 'American';
+
+  let atmosphere = 'casual';
+  if (scores.format_preference >= 8) atmosphere = 'fine dining';
+  else if (scores.social_context >= 7) atmosphere = 'lively';
+  else if (scores.format_preference >= 6) atmosphere = 'upscale casual';
+
+  return {
+    dietary: [...state.dietary].filter(d => d !== 'none'),
+    occasion: scores.social_context >= 6 ? 'friends_group' : scores.format_preference >= 7 ? 'romantic_date' : 'solo_explorer',
+    cuisine,
+    atmosphere,
+    budget: BUDGET_PRICE[state.budget] || 2,
+    noise_pref: Math.round(1 + (scores.social_context / 10) * 3),
+    island: state.island || 'oahu',
+    current_time: new Date().getHours(),
+    taste_dimensions: scores,
+  };
+}
+
+/* ─── PROCESSING + API CALL ─── */
+async function buildTasteID() {
+  if (!state.island) return;
+  goScreen('processing');
+
+  const scores  = computeTasteScores();
+  const payload = buildPayload(scores);
+
+  const steps = ['pstep-1','pstep-2','pstep-3','pstep-4','pstep-5'];
+  for (let i = 0; i < steps.length - 1; i++) {
+    document.getElementById(steps[i]).classList.add('active');
+    await sleep(400);
+    document.getElementById(steps[i]).classList.remove('active');
+    document.getElementById(steps[i]).classList.add('done');
+  }
+  document.getElementById(steps[4]).classList.add('active');
+
+  let results = [];
+  let error   = null;
+  try {
+    const res = await fetch('http://localhost:8001/recommend', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+    if (!res.ok) throw new Error(`Server returned ${res.status}`);
+    const data = await res.json();
+    results = data.recommendations || [];
+  } catch (e) {
+    error = e.message;
+  }
+
+  document.getElementById(steps[4]).classList.remove('active');
+  document.getElementById(steps[4]).classList.add('done');
+  await sleep(350);
+
+  renderResults(scores, results, error);
+  goScreen('results');
+}
+
+function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+/* ─── RENDER RESULTS ─── */
+function renderResults(scores, results, error) {
+  // Badge subtitle — summarise duel count and island
+  const islandLabel = ISLAND_OPTIONS.find(i => i.id === state.island)?.label || '';
+  const budgetLabel = BUDGET_OPTIONS.find(b => b.id === state.budget)?.label || '';
+  document.getElementById('badgeSub').textContent =
+    `8 duels · ${budgetLabel} · ${islandLabel}`;
+
+  // Dimension bars
+  const dims = document.getElementById('tasteDims');
+  dims.innerHTML = '';
+  Object.entries(DIM_LABELS).forEach(([key, label]) => {
+    const val = scores[key] ?? 5;
+    const pct = (val / 10 * 100).toFixed(0);
+    dims.innerHTML += `
+      <div class="dim-row">
+        <div class="dim-label">
+          <span>${label}</span><span class="dim-score">${val.toFixed(1)}</span>
+        </div>
+        <div class="dim-track"><div class="dim-fill" style="width:${pct}%"></div></div>
+      </div>`;
+  });
+
+  // Restaurant cards
+  const list = document.getElementById('resultsList');
+  list.innerHTML = '';
+
+  if (error) {
+    list.innerHTML = `
+      <div class="error-box">
+        <p><strong>Couldn't reach the restaurant server.</strong><br/>
+        Make sure the Ka'ana backend is running on port 8001.</p>
+        <p style="margin-top:8px;font-size:12px;opacity:0.7;">Error: ${error}</p>
+      </div>`;
+    return;
+  }
+
+  if (!results.length) {
+    list.innerHTML = `<p style="font-size:13px;color:var(--muted);">No restaurants matched your filters. Try adjusting island or budget.</p>`;
+    return;
+  }
+
+  results.slice(0, 10).forEach((r, i) => {
+    const card = document.createElement('div');
+    card.className = 'result-card';
+    const score = ((r.score || 0) * 100).toFixed(0);
+    const tags  = [r.cuisine, r.atmosphere, r.island].filter(Boolean);
+    card.innerHTML = `
+      <div class="result-inner">
+        <div class="result-rank ${i===0?'top1':''}">${i===0?'★':i+1}</div>
+        <div class="result-body">
+          <div class="result-name">${r.name || 'Unknown'}</div>
+          <div class="result-meta">${r.location||r.island||''} ${r.price_range?'· '+'$'.repeat(r.price_range):''}</div>
+          <div class="result-tags">${tags.map(t=>`<span class="result-tag">${t}</span>`).join('')}</div>
+        </div>
+        <div class="result-score"><div class="score-pill">${score}%</div></div>
+      </div>`;
+    list.appendChild(card);
+  });
+}
+
+/* ─── ACCORDION ─── */
+function toggleAccordion(head) {
+  const body = head.nextElementSibling;
+  const isOpen = body.classList.contains('open');
+
+  // Close all
+  document.querySelectorAll('.accordion-body').forEach(b => b.classList.remove('open'));
+  document.querySelectorAll('.accordion-head').forEach(h => h.classList.remove('open'));
+
+  // Open clicked (if it was closed)
+  if (!isOpen) {
+    body.classList.add('open');
+    head.classList.add('open');
+  }
+}
+
+/* ─── INIT ─── */
+buildDietaryGrid();
+buildBudgetGrid();
+buildIslandGrid();
+
+</script>
+</body>
+</html>

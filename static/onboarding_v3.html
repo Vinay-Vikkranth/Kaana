@@ -1,0 +1,1493 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Ka'ana — The Evening</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700;900&family=DM+Serif+Display&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --sans:  'DM Sans', system-ui, sans-serif;
+      --serif: 'DM Serif Display', Georgia, serif;
+      --accent:     #b8705a;
+      --accent-dk:  #9a5c48;
+      --accent-glow: rgba(184,112,90,0.25);
+      --bg:         #ede8de;
+      --surface:    #ffffff;
+      --text:       #1a1510;
+      --muted:      #6b5e52;
+      --border:     #1a1510;
+      --shadow:     4px 4px 0 #1a1510;
+      --shadow-sm:  2px 2px 0 #1a1510;
+      --ease-out:   cubic-bezier(0.0, 0, 0.2, 1);
+      --ease-std:   cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body {
+      height: 100%;
+      font-family: var(--sans);
+      overflow: hidden;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* ══════════════════════════════════════════
+       SCREEN SYSTEM
+    ══════════════════════════════════════════ */
+    .screen { display: none; position: fixed; inset: 0; }
+    .screen.active { display: flex; }
+    .screen.scroll-screen {
+      overflow-y: auto;
+      flex-direction: column;
+      align-items: center;
+      padding: 40px 20px 60px;
+    }
+
+    /* ══════════════════════════════════════════
+       WELCOME — CINEMATIC HERO
+    ══════════════════════════════════════════ */
+    #screen-welcome {
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 32px 24px;
+      text-align: center;
+      background: #0d0b08;
+      color: #ede8de;
+      overflow: hidden;
+      position: relative;
+    }
+
+    /* Ambient scene */
+    .welcome-scene {
+      position: absolute;
+      inset: 0;
+      z-index: 0;
+      overflow: hidden;
+    }
+    .welcome-scene::before {
+      content: '';
+      position: absolute;
+      width: 600px; height: 600px;
+      border-radius: 50%;
+      top: 15%; left: 50%;
+      transform: translateX(-50%);
+      background: radial-gradient(circle, rgba(184,112,90,0.15) 0%, transparent 70%);
+      animation: pulseGlow 6s ease-in-out infinite alternate;
+    }
+    @keyframes pulseGlow {
+      0%   { opacity: 0.6; transform: translateX(-50%) scale(0.9); }
+      100% { opacity: 1;   transform: translateX(-50%) scale(1.1); }
+    }
+
+    /* Hero emoji cluster */
+    .hero-cluster {
+      position: relative;
+      z-index: 1;
+      font-size: 80px;
+      line-height: 1;
+      margin-bottom: 28px;
+      opacity: 0;
+      animation: heroIn 1s 0.3s var(--ease-out) forwards;
+    }
+    .hero-cluster .hero-sub {
+      position: absolute;
+      font-size: 36px;
+      opacity: 0.5;
+    }
+    .hero-cluster .hero-sub:nth-child(1) { top: -16px; left: -52px; transform: rotate(-12deg); }
+    .hero-cluster .hero-sub:nth-child(2) { top: -16px; right: -52px; transform: rotate(12deg); }
+    .hero-cluster .hero-sub:nth-child(3) { bottom: -8px; left: -40px; transform: rotate(6deg); }
+    .hero-cluster .hero-sub:nth-child(4) { bottom: -8px; right: -40px; transform: rotate(-6deg); }
+    @keyframes heroIn {
+      from { opacity: 0; transform: scale(0.8) translateY(20px); }
+      to   { opacity: 1; transform: scale(1) translateY(0); }
+    }
+
+    .welcome-content { position: relative; z-index: 1; }
+
+    .w-logo {
+      font-size: 11px; font-weight: 900; letter-spacing: 0.3em;
+      text-transform: uppercase; padding: 7px 20px;
+      border: 1.5px solid rgba(255,255,255,0.18);
+      margin-bottom: 48px;
+      opacity: 0; animation: fadeUp 0.6s 0.1s var(--ease-out) forwards;
+    }
+    .w-badge {
+      font-size: 10px; font-weight: 700; letter-spacing: 0.14em;
+      text-transform: uppercase; color: var(--accent);
+      border: 1.5px solid var(--accent); padding: 4px 12px;
+      margin-bottom: 18px;
+      opacity: 0; animation: fadeUp 0.6s 0.25s var(--ease-out) forwards;
+    }
+    .w-title {
+      font-family: var(--serif);
+      font-size: clamp(44px, 10vw, 80px);
+      line-height: 0.92;
+      margin-bottom: 16px;
+      opacity: 0; animation: fadeUp 0.8s 0.4s var(--ease-out) forwards;
+    }
+    .w-sub {
+      font-size: 14px; color: rgba(255,255,255,0.45);
+      font-weight: 500; line-height: 1.6; max-width: 340px;
+      margin-bottom: 44px;
+      opacity: 0; animation: fadeUp 0.6s 0.6s var(--ease-out) forwards;
+    }
+
+    /* Visual feature cards */
+    .w-features {
+      display: flex; gap: 14px; flex-wrap: wrap;
+      justify-content: center; max-width: 440px;
+      margin-bottom: 44px;
+      opacity: 0; animation: fadeUp 0.6s 0.75s var(--ease-out) forwards;
+    }
+    .w-feat-card {
+      display: flex; flex-direction: column; align-items: center;
+      gap: 8px; padding: 18px 16px; flex: 1; min-width: 120px;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.08);
+    }
+    .w-feat-card .feat-icon { font-size: 32px; }
+    .w-feat-card .feat-label {
+      font-size: 11px; font-weight: 700;
+      text-transform: uppercase; letter-spacing: 0.08em;
+      text-align: center; line-height: 1.3;
+      color: rgba(255,255,255,0.5);
+    }
+
+    .w-cta {
+      width: 100%; max-width: 400px; padding: 18px 32px;
+      border: none; background: var(--accent); color: #fff;
+      font-family: var(--sans); font-size: 13px; font-weight: 700;
+      letter-spacing: 0.1em; text-transform: uppercase;
+      cursor: pointer; transition: background 0.2s, transform 0.15s;
+      opacity: 0; animation: fadeUp 0.6s 0.9s var(--ease-out) forwards;
+    }
+    .w-cta:hover { background: var(--accent-dk); transform: translateY(-1px); }
+    .w-cta:active { transform: translateY(1px); }
+
+    .w-back {
+      display: inline-block; margin-top: 14px;
+      font-size: 12px; font-weight: 600;
+      color: rgba(255,255,255,0.3); text-decoration: none;
+      transition: color 0.2s;
+      opacity: 0; animation: fadeUp 0.6s 1.0s var(--ease-out) forwards;
+    }
+    .w-back:hover { color: rgba(255,255,255,0.6); }
+    .w-time {
+      display: block; margin-top: 18px;
+      font-size: 11px; color: rgba(255,255,255,0.2);
+      font-weight: 500; letter-spacing: 0.05em;
+      opacity: 0; animation: fadeUp 0.6s 1.05s var(--ease-out) forwards;
+    }
+
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(10px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ══════════════════════════════════════════
+       STORY SCREEN — VISUAL-FIRST
+    ══════════════════════════════════════════ */
+    #screen-story {
+      flex-direction: column;
+      color: #ede8de;
+      overflow: hidden;
+    }
+
+    /* Animated background layer */
+    .scene-bg {
+      position: absolute;
+      inset: 0;
+      z-index: 0;
+      transition: background 0.8s var(--ease-std), opacity 0.8s;
+    }
+
+    /* Per-chapter atmospheres */
+    .scene-bg[data-scene="0"] {
+      background: linear-gradient(170deg, #1a1510 0%, #2d1f15 35%, #4a2820 70%, #b8705a 100%);
+    }
+    .scene-bg[data-scene="1"] {
+      background: linear-gradient(170deg, #0d0b08 0%, #0f1526 40%, #1a2744 75%, #2d4a7c 100%);
+    }
+    .scene-bg[data-scene="2"] {
+      background: linear-gradient(170deg, #0d0b08 0%, #121218 40%, #1e1e2e 75%, #3a3a5c 100%);
+    }
+    .scene-bg[data-scene="3"] {
+      background: linear-gradient(170deg, #0d0b08 0%, #1a1412 40%, #2d2018 75%, #5a3820 100%);
+    }
+    .scene-bg[data-scene="4"] {
+      background: linear-gradient(170deg, #0d0b08 0%, #0d1510 40%, #162418 75%, #2d4a30 100%);
+    }
+    .scene-bg[data-scene="5"] {
+      background: linear-gradient(170deg, #0d0b08 0%, #191210 40%, #2d1e18 75%, #6b4030 100%);
+    }
+
+    /* Floating particles */
+    .particles {
+      position: absolute;
+      inset: 0;
+      z-index: 1;
+      pointer-events: none;
+      overflow: hidden;
+    }
+    .particle {
+      position: absolute;
+      width: 3px; height: 3px;
+      background: rgba(255,255,255,0.12);
+      border-radius: 50%;
+      animation: float linear infinite;
+    }
+    @keyframes float {
+      from { transform: translateY(100vh) translateX(0); opacity: 0; }
+      10%  { opacity: 1; }
+      90%  { opacity: 1; }
+      to   { transform: translateY(-20px) translateX(30px); opacity: 0; }
+    }
+
+    /* Ambient glow per scene */
+    .scene-glow {
+      position: absolute;
+      z-index: 1;
+      width: 400px; height: 400px;
+      border-radius: 50%;
+      filter: blur(80px);
+      pointer-events: none;
+      opacity: 0.4;
+      transition: background 0.8s, opacity 0.8s;
+      top: 20%; left: 50%;
+      transform: translateX(-50%);
+      animation: glowPulse 5s ease-in-out infinite alternate;
+    }
+    @keyframes glowPulse {
+      0%   { opacity: 0.3; transform: translateX(-50%) scale(0.95); }
+      100% { opacity: 0.5; transform: translateX(-50%) scale(1.05); }
+    }
+
+    /* Content layer */
+    .story-layer {
+      position: relative;
+      z-index: 5;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Progress bar */
+    .progress-bar {
+      display: flex; gap: 5px;
+      padding: 20px 28px 0;
+      flex-shrink: 0;
+    }
+    .progress-seg {
+      flex: 1; height: 2px;
+      background: rgba(255,255,255,0.1);
+      position: relative; overflow: hidden;
+      transition: background 0.5s;
+    }
+    .progress-seg::after {
+      content: '';
+      position: absolute; inset: 0;
+      transform: scaleX(0); transform-origin: left;
+      transition: transform 0.5s var(--ease-std);
+    }
+    .progress-seg.done::after { transform: scaleX(1); background: var(--accent); }
+    .progress-seg.active::after { transform: scaleX(1); background: #ede8de; }
+
+    /* Scene visual — the hero visual area */
+    .scene-visual {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 20px 28px 0;
+      min-height: 0;
+      transition: opacity 0.4s, transform 0.4s;
+    }
+    .scene-visual.fading { opacity: 0; transform: scale(0.95); }
+
+    .scene-hero-emoji {
+      font-size: clamp(80px, 18vw, 140px);
+      line-height: 1;
+      margin-bottom: 12px;
+      filter: drop-shadow(0 10px 30px rgba(0,0,0,0.3));
+      animation: emojiFloat 3s ease-in-out infinite alternate;
+    }
+    @keyframes emojiFloat {
+      0%   { transform: translateY(0); }
+      100% { transform: translateY(-8px); }
+    }
+    .scene-time-tag {
+      font-size: 10px; font-weight: 700;
+      letter-spacing: 0.2em; text-transform: uppercase;
+      color: rgba(255,255,255,0.35);
+      margin-bottom: 6px;
+    }
+
+    /* Story text — compact */
+    .scene-text-area {
+      text-align: center;
+      padding: 0 28px 12px;
+      flex-shrink: 0;
+      transition: opacity 0.4s, transform 0.4s;
+    }
+    .scene-text-area.fading { opacity: 0; transform: translateY(-6px); }
+
+    .scene-heading {
+      font-family: var(--serif);
+      font-size: clamp(26px, 5.5vw, 44px);
+      line-height: 1.05;
+      margin-bottom: 10px;
+      color: #ede8de;
+    }
+    .scene-question {
+      font-size: 11px; font-weight: 700;
+      letter-spacing: 0.13em; text-transform: uppercase;
+      color: var(--accent);
+    }
+
+    /* Choice cards — visual emphasis */
+    .choices-area {
+      flex-shrink: 0;
+      padding: 12px 20px 28px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      max-width: 600px;
+      width: 100%;
+      margin: 0 auto;
+      transition: opacity 0.4s, transform 0.4s;
+    }
+    .choices-area.fading { opacity: 0; transform: translateY(10px); }
+
+    @media (min-width: 520px) {
+      .choices-area.grid-layout {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+      }
+    }
+
+    .v-choice {
+      display: flex; align-items: center; gap: 14px;
+      padding: 14px 18px;
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.1);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      cursor: pointer;
+      font-family: var(--sans);
+      text-align: left; color: #ede8de;
+      transition: all 0.2s;
+      opacity: 0;
+      animation: choiceIn 0.4s var(--ease-out) forwards;
+    }
+    .v-choice:hover {
+      background: rgba(255,255,255,0.1);
+      border-color: rgba(255,255,255,0.2);
+      transform: translateY(-2px);
+      box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+    }
+    .v-choice:active { transform: translateY(0); box-shadow: none; }
+    .v-choice.selected {
+      background: rgba(184,112,90,0.25);
+      border-color: var(--accent);
+      box-shadow: 0 0 30px rgba(184,112,90,0.2);
+    }
+
+    @keyframes choiceIn {
+      from { opacity: 0; transform: translateY(18px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    .v-choice:nth-child(1) { animation-delay: 0.05s; }
+    .v-choice:nth-child(2) { animation-delay: 0.1s; }
+    .v-choice:nth-child(3) { animation-delay: 0.15s; }
+    .v-choice:nth-child(4) { animation-delay: 0.2s; }
+
+    .v-choice-icon {
+      width: 48px; height: 48px;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.08);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 24px; flex-shrink: 0;
+      transition: background 0.2s;
+    }
+    .v-choice:hover .v-choice-icon { background: rgba(255,255,255,0.12); }
+    .v-choice.selected .v-choice-icon { background: rgba(184,112,90,0.3); }
+
+    .v-choice-label {
+      font-size: 14px; font-weight: 600; line-height: 1.3;
+    }
+
+    /* ══════════════════════════════════════════
+       BRIDGE OVERLAY
+    ══════════════════════════════════════════ */
+    .bridge {
+      position: fixed; inset: 0;
+      z-index: 200;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      padding: 32px;
+      opacity: 0; pointer-events: none;
+      transition: opacity 0.45s var(--ease-std), background 0.45s;
+      background: #0d0b08;
+      color: #ede8de;
+    }
+    .bridge.show { opacity: 1; pointer-events: auto; }
+
+    .bridge-emoji {
+      font-size: 52px; margin-bottom: 16px;
+      opacity: 0; transform: scale(0.7);
+      transition: opacity 0.35s 0.15s, transform 0.35s 0.15s;
+    }
+    .bridge.show .bridge-emoji { opacity: 1; transform: scale(1); }
+
+    .bridge-text {
+      font-family: var(--serif);
+      font-size: clamp(24px, 5.5vw, 48px);
+      text-align: center; line-height: 1.1;
+      max-width: 480px;
+      opacity: 0; transform: translateY(12px);
+      transition: opacity 0.4s 0.25s, transform 0.4s 0.25s;
+    }
+    .bridge.show .bridge-text { opacity: 1; transform: translateY(0); }
+
+    .bridge-line {
+      width: 32px; height: 2px;
+      background: var(--accent); margin-top: 20px;
+      opacity: 0; transition: opacity 0.3s 0.5s;
+    }
+    .bridge.show .bridge-line { opacity: 1; }
+
+    /* ══════════════════════════════════════════
+       CONSTRAINT SCREENS (DARK / VISUAL)
+    ══════════════════════════════════════════ */
+    .constraint-screen {
+      background: #0d0b08;
+      color: #ede8de;
+      overflow-y: auto;
+      flex-direction: column;
+      align-items: center;
+    }
+    .constraint-screen.active { animation: fadeIn 0.35s var(--ease-out) both; }
+    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+    .constraint-inner {
+      max-width: 480px; width: 100%;
+      padding: 40px 24px;
+      display: flex; flex-direction: column;
+      align-items: flex-start;
+      margin: auto;
+    }
+    .c-badge {
+      font-size: 10px; font-weight: 700;
+      letter-spacing: 0.14em; text-transform: uppercase;
+      color: var(--accent);
+      border: 1.5px solid var(--accent);
+      padding: 3px 10px; margin-bottom: 18px;
+    }
+    .c-heading {
+      font-family: var(--serif);
+      font-size: clamp(28px, 5.5vw, 40px);
+      line-height: 1.05; margin-bottom: 10px;
+    }
+    .c-desc {
+      font-size: 14px; color: rgba(255,255,255,0.45);
+      font-weight: 500; line-height: 1.55; margin-bottom: 28px;
+    }
+
+    .tile-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 8px; width: 100%; margin-bottom: 32px;
+    }
+    @media (min-width: 420px) {
+      .tile-grid { grid-template-columns: repeat(3, 1fr); }
+    }
+    .tile {
+      display: flex; flex-direction: column;
+      align-items: center; gap: 8px;
+      padding: 20px 12px;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.08);
+      cursor: pointer; font-family: var(--sans);
+      transition: all 0.2s;
+    }
+    .tile:hover {
+      background: rgba(255,255,255,0.08);
+      border-color: rgba(255,255,255,0.16);
+      transform: translateY(-1px);
+    }
+    .tile.selected {
+      background: rgba(184,112,90,0.2);
+      border-color: var(--accent);
+      box-shadow: 0 0 20px rgba(184,112,90,0.1);
+    }
+    .tile-emoji { font-size: 28px; }
+    .tile-label {
+      font-size: 11px; font-weight: 700;
+      text-transform: uppercase; letter-spacing: 0.06em;
+      text-align: center; line-height: 1.2;
+      color: rgba(255,255,255,0.4);
+    }
+    .tile.selected .tile-label { color: #ede8de; }
+
+    .c-nav {
+      display: flex; align-items: center;
+      justify-content: space-between;
+      width: 100%; padding-bottom: 32px;
+    }
+    .btn-ghost-dark {
+      font-family: var(--sans); font-size: 12px; font-weight: 600;
+      color: rgba(255,255,255,0.35); background: none; border: none;
+      cursor: pointer; padding: 10px 4px; transition: color 0.2s;
+    }
+    .btn-ghost-dark:hover { color: rgba(255,255,255,0.7); }
+
+    .btn-next {
+      font-family: var(--sans); font-size: 13px; font-weight: 700;
+      letter-spacing: 0.08em; text-transform: uppercase;
+      padding: 14px 28px; background: var(--accent); color: #fff;
+      border: none; cursor: pointer;
+      transition: background 0.2s, opacity 0.2s, transform 0.15s;
+    }
+    .btn-next:hover { background: var(--accent-dk); transform: translateY(-1px); }
+    .btn-next:active { transform: translateY(1px); }
+    .btn-next:disabled { opacity: 0.3; cursor: not-allowed; transform: none; }
+
+    /* ══════════════════════════════════════════
+       PROCESSING
+    ══════════════════════════════════════════ */
+    #screen-processing {
+      background: #0d0b08; color: #ede8de;
+      align-items: center; justify-content: center;
+    }
+    .proc-content {
+      display: flex; flex-direction: column;
+      align-items: center; gap: 24px;
+      max-width: 280px; text-align: center;
+    }
+    .proc-ring {
+      width: 52px; height: 52px;
+      border: 2px solid rgba(255,255,255,0.08);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .proc-title {
+      font-family: var(--serif); font-size: 22px; line-height: 1.2;
+    }
+    .proc-sub {
+      font-size: 12px; color: rgba(255,255,255,0.4);
+      font-weight: 500; margin-top: -16px;
+    }
+    .p-steps { list-style: none; display: flex; flex-direction: column; gap: 10px; text-align: left; width: 100%; }
+    .p-step {
+      font-size: 11px; font-weight: 700;
+      text-transform: uppercase; letter-spacing: 0.08em;
+      color: rgba(255,255,255,0.15);
+      display: flex; align-items: center; gap: 10px;
+      transition: color 0.4s;
+    }
+    .p-dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; flex-shrink: 0; }
+    .p-step.active { color: var(--accent); }
+    .p-step.done   { color: rgba(255,255,255,0.4); }
+
+    /* ══════════════════════════════════════════
+       RESULTS (LIGHT PAL WORLD)
+    ══════════════════════════════════════════ */
+    #screen-results {
+      background: var(--bg); color: var(--text);
+    }
+    #screen-results.active { animation: revealLight 0.6s var(--ease-out) both; }
+    @keyframes revealLight { from { opacity: 0; } to { opacity: 1; } }
+
+    .results-wrap { max-width: 680px; width: 100%; }
+
+    .archetype-card {
+      background: var(--text); color: var(--bg);
+      padding: 28px 32px;
+      border: 2px solid var(--border);
+      box-shadow: var(--shadow);
+      margin-bottom: 28px;
+      opacity: 0;
+      animation: slideUp 0.7s 0.2s var(--ease-out) forwards;
+    }
+    @keyframes slideUp {
+      from { opacity: 0; transform: translateY(16px) scale(0.98); }
+      to   { opacity: 1; transform: translateY(0) scale(1); }
+    }
+    .arch-tag { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.15em; opacity: 0.5; margin-bottom: 8px; }
+    .arch-icon { font-size: clamp(36px, 7vw, 56px); display: block; margin-bottom: 8px; }
+    .arch-name { font-family: var(--serif); font-size: clamp(26px, 5vw, 42px); line-height: 1.05; margin-bottom: 12px; }
+    .arch-desc { font-size: 13px; font-weight: 500; line-height: 1.65; opacity: 0.75; }
+
+    .r-title { font-size: clamp(18px, 3.5vw, 26px); font-weight: 900; text-transform: uppercase; margin-bottom: 6px; }
+    .r-sub { font-size: 13px; color: var(--muted); font-weight: 500; margin-bottom: 20px; }
+
+    /* Taste dimensions */
+    .taste-grid {
+      display: grid; grid-template-columns: 1fr 1fr;
+      gap: 12px 28px; width: 100%; margin-bottom: 28px;
+    }
+    @media (max-width: 480px) { .taste-grid { grid-template-columns: 1fr; } }
+    .dim-row { display: flex; flex-direction: column; gap: 5px; }
+    .dim-header { display: flex; justify-content: space-between; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em; }
+    .dim-val { color: var(--accent); }
+    .dim-track { height: 5px; background: rgba(26,21,16,0.08); overflow: hidden; }
+    .dim-fill { height: 100%; background: var(--accent); width: 0; transition: width 1.2s var(--ease-out); }
+
+    .r-actions { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 28px; }
+    .btn-pal {
+      display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+      font-family: var(--sans); font-size: 12px; font-weight: 700;
+      text-transform: uppercase; letter-spacing: 0.06em;
+      cursor: pointer; border: 2px solid var(--border);
+      padding: 10px 20px; text-decoration: none; color: inherit;
+      background: var(--surface); box-shadow: var(--shadow-sm);
+      transition: transform 0.1s, box-shadow 0.1s;
+    }
+    .btn-pal:hover { transform: translate(-1px,-1px); box-shadow: var(--shadow); }
+    .btn-pal:active { transform: translate(2px,2px); box-shadow: none; }
+    .btn-pal-ghost {
+      display: inline-flex; align-items: center;
+      font-family: var(--sans); font-size: 12px; font-weight: 600;
+      color: var(--muted); text-decoration: none;
+      border: none; background: none; cursor: pointer;
+      padding: 10px 4px; transition: color 0.2s;
+    }
+    .btn-pal-ghost:hover { color: var(--text); }
+
+    /* Restaurant cards */
+    .rest-list { display: flex; flex-direction: column; gap: 10px; width: 100%; }
+    .rest-card {
+      border: 2px solid var(--border);
+      background: var(--surface);
+      box-shadow: var(--shadow-sm);
+      overflow: hidden;
+      transition: transform 0.12s, box-shadow 0.12s;
+      opacity: 0; animation: cardIn 0.4s var(--ease-out) forwards;
+    }
+    .rest-card:hover { transform: translate(-2px,-2px); box-shadow: var(--shadow); }
+    @keyframes cardIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    .rest-inner { display: flex; align-items: stretch; }
+    .rest-rank {
+      width: 48px; background: var(--bg);
+      border-right: 2px solid var(--border);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 18px; font-weight: 900; color: var(--muted); flex-shrink: 0;
+    }
+    .rest-rank.top { background: var(--accent); color: #fff; font-size: 22px; }
+    .rest-body { padding: 14px 16px; flex: 1; min-width: 0; }
+    .rest-name { font-size: 15px; font-weight: 900; text-transform: uppercase; letter-spacing: -0.01em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .rest-meta { font-size: 11px; color: var(--muted); font-weight: 500; margin-top: 3px; }
+    .rest-reasons { font-size: 11px; color: var(--muted); font-weight: 500; margin-top: 6px; line-height: 1.4; font-style: italic; }
+    .rest-tags { display: flex; gap: 5px; flex-wrap: wrap; margin-top: 8px; }
+    .rest-tag { font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; border: 1.5px solid var(--border); padding: 2px 7px; background: var(--bg); }
+    .rest-score { padding: 14px; display: flex; align-items: center; border-left: 2px solid var(--border); flex-shrink: 0; }
+    .score-pill { background: var(--accent); color: #fff; font-size: 13px; font-weight: 900; padding: 5px 10px; border: 2px solid var(--border); }
+    .error-box { border: 2px solid #dc2626; background: #fef2f2; padding: 16px 20px; }
+    .error-box p { font-size: 13px; font-weight: 500; color: #991b1b; }
+
+    /* ══════════════════════════════════════════
+       WHY THIS WORKS (LIGHT PAL)
+    ══════════════════════════════════════════ */
+    #screen-why { background: var(--bg); color: var(--text); }
+    .why-wrap { max-width: 640px; width: 100%; }
+    .why-badge { display: inline-block; font-size: 10px; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: var(--accent); border: 1.5px solid var(--accent); padding: 3px 10px; margin-bottom: 14px; }
+    .why-title { font-family: var(--sans); font-size: clamp(20px, 4vw, 30px); font-weight: 900; text-transform: uppercase; margin-bottom: 8px; }
+    .why-desc { font-size: 14px; color: var(--muted); font-weight: 500; line-height: 1.6; margin-bottom: 28px; }
+    .accordion { display: flex; flex-direction: column; width: 100%; margin-bottom: 32px; }
+    .acc-item { border: 2px solid var(--border); border-bottom: none; }
+    .acc-item:last-child { border-bottom: 2px solid var(--border); }
+    .acc-head { display: flex; align-items: center; justify-content: space-between; padding: 16px 20px; cursor: pointer; background: var(--surface); transition: background 0.15s; gap: 12px; border: none; width: 100%; font-family: var(--sans); text-align: left; color: var(--text); }
+    .acc-head:hover, .acc-head.open { background: var(--bg); }
+    .acc-title { font-size: 13px; font-weight: 900; text-transform: uppercase; letter-spacing: 0.04em; display: flex; align-items: center; gap: 10px; }
+    .acc-icon { font-size: 18px; }
+    .acc-arrow { font-size: 11px; color: var(--muted); transition: transform 0.25s; flex-shrink: 0; }
+    .acc-head.open .acc-arrow { transform: rotate(180deg); }
+    .acc-body { display: none; padding: 0 20px 20px; background: var(--bg); border-top: 1.5px solid rgba(26,21,16,0.12); }
+    .acc-body.open { display: block; animation: fadeIn 0.25s var(--ease-out); }
+    .acc-body p { font-size: 13px; font-weight: 500; color: var(--muted); line-height: 1.7; margin-top: 12px; }
+    .acc-body p + p { margin-top: 8px; }
+    .acc-body strong { color: var(--text); font-weight: 700; }
+    .cite { padding: 10px 14px; border-left: 3px solid var(--accent); background: var(--surface); border-top: 1px solid rgba(26,21,16,0.08); border-right: 1px solid rgba(26,21,16,0.08); border-bottom: 1px solid rgba(26,21,16,0.08); margin-top: 8px; }
+    .cite-title { font-size: 12px; font-weight: 700; color: var(--text); margin-bottom: 2px; }
+    .cite-meta  { font-size: 11px; color: var(--muted); font-weight: 500; }
+    .why-actions { display: flex; gap: 10px; flex-wrap: wrap; padding-bottom: 48px; }
+  </style>
+</head>
+<body>
+
+<!-- ════════════════════════════════════════════
+     WELCOME
+════════════════════════════════════════════ -->
+<div id="screen-welcome" class="screen active">
+  <div class="welcome-scene"></div>
+  <div class="welcome-content" style="display:flex;flex-direction:column;align-items:center;text-align:center;">
+    <div class="w-logo">KA'ANA</div>
+    <div class="w-badge">VERSION 3 — THE EVENING</div>
+
+    <div class="hero-cluster">
+      🍽️
+      <span class="hero-sub">🌅</span>
+      <span class="hero-sub">🍷</span>
+      <span class="hero-sub">🌺</span>
+      <span class="hero-sub">✨</span>
+    </div>
+
+    <h1 class="w-title">A Short Story<br>About Dinner.</h1>
+    <p class="w-sub">Six moments. Six choices. Each reveals something real about how you eat.</p>
+
+    <div class="w-features">
+      <div class="w-feat-card">
+        <span class="feat-icon">📖</span>
+        <span class="feat-label">Your Story</span>
+      </div>
+      <div class="w-feat-card">
+        <span class="feat-icon">🎭</span>
+        <span class="feat-label">6 Scenes</span>
+      </div>
+      <div class="w-feat-card">
+        <span class="feat-icon">🧬</span>
+        <span class="feat-label">Your Type</span>
+      </div>
+    </div>
+
+    <button class="w-cta" onclick="startStory()">Begin the Story →</button>
+    <a href="/selector.html" class="w-back">← Try another version</a>
+    <span class="w-time">6 chapters · about 90 seconds</span>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════
+     STORY
+════════════════════════════════════════════ -->
+<div id="screen-story" class="screen">
+  <!-- Cinematic background -->
+  <div class="scene-bg" id="sceneBg" data-scene="0"></div>
+  <div class="scene-glow" id="sceneGlow"></div>
+  <div class="particles" id="particles"></div>
+
+  <div class="story-layer">
+    <!-- Progress -->
+    <div class="progress-bar">
+      <div class="progress-seg" id="seg-0"></div>
+      <div class="progress-seg" id="seg-1"></div>
+      <div class="progress-seg" id="seg-2"></div>
+      <div class="progress-seg" id="seg-3"></div>
+      <div class="progress-seg" id="seg-4"></div>
+      <div class="progress-seg" id="seg-5"></div>
+    </div>
+
+    <!-- Visual hero -->
+    <div class="scene-visual" id="sceneVisual">
+      <div class="scene-hero-emoji" id="sceneEmoji">🌆</div>
+      <div class="scene-time-tag" id="sceneTime">CHAPTER ONE · Friday, 6:30 PM</div>
+    </div>
+
+    <!-- Text (minimal) -->
+    <div class="scene-text-area" id="sceneText">
+      <h2 class="scene-heading" id="sceneHeading">Work is done.<br>The evening is yours.</h2>
+      <p class="scene-question" id="sceneQuestion">Who's joining you tonight?</p>
+    </div>
+
+    <!-- Choices -->
+    <div class="choices-area" id="choicesArea"></div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════
+     BRIDGE
+════════════════════════════════════════════ -->
+<div class="bridge" id="bridge">
+  <div class="bridge-emoji" id="bridgeEmoji">🌆</div>
+  <div class="bridge-text" id="bridgeText">A solo evening.</div>
+  <div class="bridge-line"></div>
+</div>
+
+<!-- ════════════════════════════════════════════
+     DIETARY
+════════════════════════════════════════════ -->
+<div id="screen-dietary" class="screen constraint-screen">
+  <div class="constraint-inner">
+    <div class="c-badge">Before we find your table</div>
+    <h2 class="c-heading">Any dietary<br>restrictions?</h2>
+    <p class="c-desc">We'll filter out anywhere that can't accommodate you.</p>
+    <div class="tile-grid" id="dietaryGrid"></div>
+    <div class="c-nav">
+      <button class="btn-ghost-dark" onclick="goScreen('story')">← Back</button>
+      <button class="btn-next" onclick="goScreen('island')">Continue →</button>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════
+     ISLAND
+════════════════════════════════════════════ -->
+<div id="screen-island" class="screen constraint-screen">
+  <div class="constraint-inner">
+    <div class="c-badge">One last thing</div>
+    <h2 class="c-heading">Which island<br>are you on?</h2>
+    <p class="c-desc">Only restaurants you can actually get to.</p>
+    <div class="tile-grid" id="islandGrid"></div>
+    <div class="c-nav">
+      <button class="btn-ghost-dark" onclick="goScreen('dietary')">← Back</button>
+      <button class="btn-next" id="islandNextBtn" onclick="buildTasteID()" disabled>Find My Restaurants →</button>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════
+     PROCESSING
+════════════════════════════════════════════ -->
+<div id="screen-processing" class="screen">
+  <div class="proc-content">
+    <div class="proc-ring"></div>
+    <div class="proc-title">Building Your<br>Taste ID</div>
+    <div class="proc-sub">Just a moment…</div>
+    <ul class="p-steps">
+      <li class="p-step" id="pstep-1"><span class="p-dot"></span>Reading your story choices</li>
+      <li class="p-step" id="pstep-2"><span class="p-dot"></span>Identifying your archetype</li>
+      <li class="p-step" id="pstep-3"><span class="p-dot"></span>Generating taste vector</li>
+      <li class="p-step" id="pstep-4"><span class="p-dot"></span>Querying restaurant index</li>
+      <li class="p-step" id="pstep-5"><span class="p-dot"></span>Ranking your matches</li>
+    </ul>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════
+     RESULTS
+════════════════════════════════════════════ -->
+<div id="screen-results" class="screen scroll-screen">
+  <div class="results-wrap">
+    <div class="archetype-card" id="archetypeCard">
+      <div class="arch-tag">Your Food Archetype</div>
+      <div class="arch-icon" id="archetypeIcon">🧭</div>
+      <div class="arch-name" id="archetypeName">The Explorer</div>
+      <div class="arch-desc" id="archetypeDesc">You seek the undiscovered.</div>
+    </div>
+
+    <h3 class="r-title">Your Top Matches</h3>
+    <p class="r-sub">Based on the evening you just described.</p>
+    <div class="taste-grid" id="tasteDims"></div>
+    <div class="r-actions">
+      <button class="btn-pal" onclick="goScreen('why')">🔬 See the Science</button>
+      <a href="/selector.html" class="btn-pal-ghost">← Try another version</a>
+    </div>
+    <div class="rest-list" id="resultsList">
+      <p style="font-size:13px;color:var(--muted);">Loading…</p>
+    </div>
+    <div style="height:40px;"></div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════
+     WHY THIS WORKS
+════════════════════════════════════════════ -->
+<div id="screen-why" class="screen scroll-screen">
+  <div class="why-wrap">
+    <div class="why-badge">Methodology</div>
+    <h2 class="why-title">Why This Works</h2>
+    <p class="why-desc">The story felt casual. The science behind it is anything but. Here's what each chapter was actually measuring.</p>
+
+    <div class="accordion">
+      <div class="acc-item">
+        <button class="acc-head" onclick="toggleAcc(this)">
+          <span class="acc-title"><span class="acc-icon">📖</span> Why a story and not a form?</span>
+          <span class="acc-arrow">▼</span>
+        </button>
+        <div class="acc-body">
+          <p>When people know they're being assessed, they perform. This is called <strong>social desirability bias</strong>.</p>
+          <p>A story bypasses this. You engage <strong>System 1 thinking</strong> (fast, instinctive, honest) rather than System 2 (slow, analytical, performative).</p>
+          <p>Grounded in <strong>scenario-based preference elicitation</strong> from behavioural economics.</p>
+        </div>
+      </div>
+      <div class="acc-item">
+        <button class="acc-head" onclick="toggleAcc(this)">
+          <span class="acc-title"><span class="acc-icon">🎭</span> What did each chapter measure?</span>
+          <span class="acc-arrow">▼</span>
+        </button>
+        <div class="acc-body">
+          <p><strong>Chapter 1 — Who's joining you?</strong><br>Social context & format preference. Solo → focused dining. Date → higher spend.</p>
+          <p><strong>Chapter 2 — How are you feeling?</strong><br>Mood-driven adventurousness. "Exhausted" → familiar. "Celebratory" → fine dining.</p>
+          <p><strong>Chapter 3 — What did you search?</strong><br>Local engagement & adventurousness proxy. Search behaviour is honest.</p>
+          <p><strong>Chapter 4 — The 45-minute wait.</strong><br>Patience/quality signal. Wait tolerance correlates with price orientation.</p>
+          <p><strong>Chapter 5 — The specials board.</strong><br>Highest-signal: spice, health, adventure, complexity, local engagement — all from one food choice.</p>
+          <p><strong>Chapter 6 — The bill.</strong><br>Price ceiling calibration. $95 for two is a concrete anchor.</p>
+        </div>
+      </div>
+      <div class="acc-item">
+        <button class="acc-head" onclick="toggleAcc(this)">
+          <span class="acc-title"><span class="acc-icon">🧬</span> How are food archetypes calculated?</span>
+          <span class="acc-arrow">▼</span>
+        </button>
+        <div class="acc-body">
+          <p>Each taste dimension scores 0–10. The top 2–3 dimensions determine your archetype:</p>
+          <p><strong>The Explorer</strong> — adventurousness ≥ 7 + local_engagement ≥ 6.<br>
+          <strong>The Connoisseur</strong> — price ≥ 7 + complexity ≥ 7.<br>
+          <strong>The Social Feaster</strong> — social ≥ 7.<br>
+          <strong>The Health Seeker</strong> — health ≥ 7.<br>
+          <strong>The Comfort Lover</strong> — adventure ≤ 4 + health ≤ 4.<br>
+          <strong>The Value Hunter</strong> — price ≤ 3.<br>
+          <strong>The Balanced Eater</strong> — no dominant dimension.</p>
+        </div>
+      </div>
+      <div class="acc-item">
+        <button class="acc-head" onclick="toggleAcc(this)">
+          <span class="acc-title"><span class="acc-icon">🔬</span> Academic research behind this</span>
+          <span class="acc-arrow">▼</span>
+        </button>
+        <div class="acc-body">
+          <div class="cite"><div class="cite-title">Scenario-Based Preference Elicitation</div><div class="cite-meta">Louviere, Hensher & Swait (2000) — Stated Choice Methods. Cambridge University Press.</div></div>
+          <div class="cite"><div class="cite-title">System 1 / System 2 Thinking</div><div class="cite-meta">Kahneman (2011) — Thinking, Fast and Slow.</div></div>
+          <div class="cite"><div class="cite-title">Customer Restaurant Choice</div><div class="cite-meta">Chua et al. (2020), PMC7503372.</div></div>
+          <div class="cite"><div class="cite-title">Food Neophobia Scale</div><div class="cite-meta">Pliner & Hobden (1992).</div></div>
+          <div class="cite"><div class="cite-title">Social Desirability Bias</div><div class="cite-meta">Tourangeau & Yan (2007), Psychological Bulletin.</div></div>
+        </div>
+      </div>
+      <div class="acc-item">
+        <button class="acc-head" onclick="toggleAcc(this)">
+          <span class="acc-title"><span class="acc-icon">🆚</span> How does this compare to V1 and V2?</span>
+          <span class="acc-arrow">▼</span>
+        </button>
+        <div class="acc-body">
+          <p><strong>V1 — Tasting Table:</strong> Three-state reactions. Deliberate and nuanced.</p>
+          <p><strong>V2 — The Duel:</strong> Pairwise forced choice. Fastest method.</p>
+          <p><strong>V3 — The Evening:</strong> Scenario narrative. Highest ecological validity.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="why-actions">
+      <button class="btn-pal" onclick="goScreen('results')" style="background:var(--accent);color:#fff;">← Back to Results</button>
+      <a class="btn-pal" href="/selector.html">← All Versions</a>
+    </div>
+  </div>
+</div>
+
+
+<!-- ════════════════════════════════════════════
+     JAVASCRIPT
+════════════════════════════════════════════ -->
+<script>
+
+/* ─── CHAPTER DATA ─── */
+const CHAPTER_WORDS = ['ONE','TWO','THREE','FOUR','FIVE','SIX'];
+
+/* Scene-level visuals per chapter */
+const SCENE_MOODS = [
+  { emoji: '🌆', glow: 'rgba(184,112,90,0.35)' },
+  { emoji: '🌙', glow: 'rgba(60,80,160,0.35)' },
+  { emoji: '📱', glow: 'rgba(100,80,180,0.3)' },
+  { emoji: '⏱️', glow: 'rgba(160,100,50,0.35)' },
+  { emoji: '🍽️', glow: 'rgba(60,140,70,0.3)' },
+  { emoji: '🧾', glow: 'rgba(160,90,50,0.35)' },
+];
+
+const CHAPTERS = [
+  {
+    time: 'Friday, 6:30 PM',
+    heading: 'Work is done.<br>The evening is yours.',
+    question: 'Who\'s joining you tonight?',
+    fourCol: true,
+    choices: [
+      { icon:'🧍', text:'Solo night out',
+        note:'A solo evening.\nThe city is yours.', bridgeEmoji:'🌃',
+        signals:{ social_context:1, format_preference:6, adventurousness:7, price_orientation:6 } },
+      { icon:'💑', text:'Date night',
+        note:'Date night.\nMake it count.', bridgeEmoji:'💫',
+        signals:{ social_context:2, format_preference:7, price_orientation:7, adventurousness:5 } },
+      { icon:'👥', text:'Friends — the crew',
+        note:'The whole crew.\nEnergy incoming.', bridgeEmoji:'🔥',
+        signals:{ social_context:9, format_preference:3, price_orientation:4, adventurousness:5 } },
+      { icon:'👨‍👩‍👧', text:'Family dinner',
+        note:'Everyone\'s here.\nFind somewhere for all.', bridgeEmoji:'🏠',
+        signals:{ social_context:7, format_preference:4, price_orientation:4, adventurousness:3 } },
+    ]
+  },
+  {
+    time: 'The vibe check',
+    heading: 'Before you decide<br>anything at all—',
+    question: 'How are you feeling right now?',
+    fourCol: true,
+    choices: [
+      { icon:'😮‍💨', text:'Tired. Something easy & great.',
+        note:'You\'ve earned\nsomething good.', bridgeEmoji:'🛋️',
+        signals:{ adventurousness:3, format_preference:6, health_orientation:5, price_orientation:6 } },
+      { icon:'⚡', text:'Energised. Let\'s explore.',
+        note:'Tonight\nwe explore.', bridgeEmoji:'🗺️',
+        signals:{ adventurousness:8, flavor_complexity:7, local_engagement:6, price_orientation:5 } },
+      { icon:'🤤', text:'Famished. Fast & delicious.',
+        note:'No time\nto waste.', bridgeEmoji:'⚡',
+        signals:{ adventurousness:4, format_preference:2, price_orientation:3, health_orientation:4 } },
+      { icon:'🥂', text:'Celebratory. Make it special.',
+        note:'Make it\na night to remember.', bridgeEmoji:'🥂',
+        signals:{ price_orientation:9, format_preference:8, flavor_complexity:7, adventurousness:6 } },
+    ]
+  },
+  {
+    time: 'The search',
+    heading: 'You open<br>your phone.',
+    question: 'What do you type?',
+    fourCol: true,
+    choices: [
+      { icon:'🗺️', text:'"Hidden gem locals love"',
+        note:'Off the beaten path.\nSmart.', bridgeEmoji:'📍',
+        signals:{ local_engagement:9, adventurousness:7, price_orientation:5 } },
+      { icon:'⭐', text:'"Best rated near me"',
+        note:'Let the ratings\npoint the way.', bridgeEmoji:'⭐',
+        signals:{ local_engagement:4, adventurousness:4, price_orientation:6, format_preference:5 } },
+      { icon:'💸', text:'"Good cheap eats"',
+        note:'Value\nover everything.', bridgeEmoji:'💰',
+        signals:{ price_orientation:1, local_engagement:5, adventurousness:5 } },
+      { icon:'🌍', text:'"Cuisine I\'ve never tried"',
+        note:'Blank map.\nLet\'s discover.', bridgeEmoji:'🌍',
+        signals:{ adventurousness:9, flavor_complexity:8, local_engagement:6, spice_tolerance:6 } },
+    ]
+  },
+  {
+    time: 'The plot twist',
+    heading: 'Your first pick has<br>a 45-minute wait.',
+    question: 'What do you do?',
+    fourCol: false,
+    choices: [
+      { icon:'🍸', text:'Worth it — drinks at the bar.',
+        note:'The good ones\nare worth waiting for.', bridgeEmoji:'🍸',
+        signals:{ price_orientation:8, format_preference:7, adventurousness:5 } },
+      { icon:'🚶', text:'Nope. Somewhere with no wait.',
+        note:'Your time\nmatters too.', bridgeEmoji:'⏩',
+        signals:{ price_orientation:4, format_preference:3, adventurousness:4 } },
+      { icon:'🎲', text:'Use this to try somewhere new.',
+        note:'Every obstacle\nis a new door.', bridgeEmoji:'🎲',
+        signals:{ adventurousness:8, local_engagement:7, price_orientation:5 } },
+    ]
+  },
+  {
+    time: 'The specials board',
+    heading: 'You sit down.<br>The server points<br>to the board.',
+    question: 'One choice.',
+    fourCol: true,
+    choices: [
+      { icon:'🍛', text:'Lamb curry, house flatbread',
+        note:'Bold choice.\nGood one.', bridgeEmoji:'🔥',
+        signals:{ spice_tolerance:8, adventurousness:8, flavor_complexity:9, health_orientation:4, price_orientation:5, local_engagement:7 } },
+      { icon:'🐠', text:'Seared ahi, island greens',
+        note:'Clean\nand local.', bridgeEmoji:'🌊',
+        signals:{ health_orientation:9, local_engagement:9, spice_tolerance:2, adventurousness:5, flavor_complexity:6, price_orientation:6 } },
+      { icon:'🍖', text:'Short rib, truffle butter',
+        note:'You\'re not\nholding back tonight.', bridgeEmoji:'🍷',
+        signals:{ health_orientation:2, flavor_complexity:8, price_orientation:8, adventurousness:5, spice_tolerance:3, local_engagement:4 } },
+      { icon:'🍕', text:'Wood-fired margherita',
+        note:'A classic\nfor a reason.', bridgeEmoji:'👌',
+        signals:{ adventurousness:2, spice_tolerance:2, health_orientation:3, flavor_complexity:4, price_orientation:4, local_engagement:2 } },
+    ]
+  },
+  {
+    time: 'The bill arrives',
+    heading: '$95 for two.<br>The moment<br>of truth.',
+    question: 'How do you feel?',
+    fourCol: true,
+    choices: [
+      { icon:'💫', text:'Worth every cent.',
+        note:'You know what\nyou\'re worth.', bridgeEmoji:'💫',
+        signals:{ price_orientation:10 } },
+      { icon:'👍', text:'A touch pricey, but fair.',
+        note:'Value\nwas there.', bridgeEmoji:'👍',
+        signals:{ price_orientation:7 } },
+      { icon:'⚖️', text:'About my ceiling.',
+        note:'Honest.', bridgeEmoji:'⚖️',
+        signals:{ price_orientation:5 } },
+      { icon:'💰', text:'I\'d spend half that.',
+        note:'Budget-conscious\nand proud.', bridgeEmoji:'💰',
+        signals:{ price_orientation:2 } },
+    ]
+  },
+];
+
+/* ─── CONSTRAINTS ─── */
+const DIETARY_OPTIONS = [
+  { id:'none', label:'No Restrictions', emoji:'✅' },
+  { id:'vegetarian', label:'Vegetarian', emoji:'🥦' },
+  { id:'vegan', label:'Vegan', emoji:'🌱' },
+  { id:'gluten_free', label:'Gluten-Free', emoji:'🌾' },
+  { id:'halal', label:'Halal', emoji:'☪️' },
+  { id:'kosher', label:'Kosher', emoji:'✡️' },
+  { id:'shellfish', label:'No Shellfish', emoji:'🦞' },
+  { id:'dairy_free', label:'Dairy-Free', emoji:'🥛' },
+  { id:'nut_allergy', label:'Nut Allergy', emoji:'🥜' },
+];
+const ISLAND_OPTIONS = [
+  { id:'oahu', label:"O'ahu", emoji:'🌺' },
+  { id:'maui', label:'Maui', emoji:'🌊' },
+  { id:'big_island', label:'Big Island', emoji:'🌋' },
+  { id:'kauai', label:"Kaua'i", emoji:'🌿' },
+  { id:'molokai', label:"Moloka'i", emoji:'🐠' },
+  { id:'lanai', label:"Lāna'i", emoji:'🦋' },
+];
+
+/* ─── DIMENSIONS ─── */
+const DIM_LABELS = {
+  adventurousness:'Adventurousness', spice_tolerance:'Spice Tolerance',
+  health_orientation:'Health Focus', flavor_complexity:'Flavor Complexity',
+  price_orientation:'Price Willingness', social_context:'Social Energy',
+  local_engagement:'Local Engagement', format_preference:'Dining Format',
+};
+const DIMS = Object.keys(DIM_LABELS);
+
+/* ─── ARCHETYPES ─── */
+const ARCHETYPES = [
+  { name:'The Explorer', icon:'🧭', condition: s => s.adventurousness >= 7 && s.local_engagement >= 6,
+    desc:'You seek the undiscovered. Hidden gems, bold flavours, unfamiliar menus — you eat to experience, not just to be fed.' },
+  { name:'The Connoisseur', icon:'🍷', condition: s => s.price_orientation >= 7 && s.flavor_complexity >= 7,
+    desc:'Quality is non-negotiable. You understand that a great meal is worth paying for, and you have the palate to appreciate every layer.' },
+  { name:'The Social Feaster', icon:'🥂', condition: s => s.social_context >= 7,
+    desc:'Food is better when shared. Communal tables, passed plates, and meals that turn into three-hour conversations.' },
+  { name:'The Health Seeker', icon:'🌿', condition: s => s.health_orientation >= 7,
+    desc:'You eat with intention. Fresh, clean, nourishing — food should make you feel as good as it tastes.' },
+  { name:'The Comfort Lover', icon:'🛋️', condition: s => s.adventurousness <= 4 && s.health_orientation <= 4,
+    desc:'Reliable and deeply satisfying. The classics exist because they work, and you know exactly what makes you happy.' },
+  { name:'The Value Hunter', icon:'💡', condition: s => s.price_orientation <= 3,
+    desc:'The best meal isn\'t the most expensive one. You find genuine quality at any price point.' },
+];
+const DEFAULT_ARCHETYPE = { name:'The Balanced Eater', icon:'⚖️',
+  desc:'No fixed rules. Mood, occasion, company — everything factors in. Impossible to predict, genuinely interesting to feed.' };
+
+/* ─── STATE ─── */
+const dimSums = Object.fromEntries(DIMS.map(d => [d, { sum:0, count:0 }]));
+let currentChapter = 0;
+let picking = false;
+const state = { dietary: new Set(['none']), island: null, tasteScores: {}, archetype: null };
+
+/* ─── PARTICLES ─── */
+function initParticles() {
+  const container = document.getElementById('particles');
+  for (let i = 0; i < 20; i++) {
+    const p = document.createElement('div');
+    p.className = 'particle';
+    p.style.left = Math.random() * 100 + '%';
+    p.style.animationDuration = (8 + Math.random() * 12) + 's';
+    p.style.animationDelay = (Math.random() * 10) + 's';
+    p.style.width = p.style.height = (2 + Math.random() * 3) + 'px';
+    p.style.opacity = (0.05 + Math.random() * 0.15);
+    container.appendChild(p);
+  }
+}
+
+/* ─── SCREEN NAV ─── */
+function goScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  const el = document.getElementById('screen-' + id);
+  el.classList.add('active');
+  if (el.classList.contains('scroll-screen')) el.scrollTop = 0;
+}
+
+/* ─── PROGRESS ─── */
+function updateProgress(idx) {
+  for (let i = 0; i < 6; i++) {
+    const seg = document.getElementById('seg-' + i);
+    seg.className = 'progress-seg' + (i < idx ? ' done' : i === idx ? ' active' : '');
+  }
+}
+
+/* ─── RENDER CHAPTER ─── */
+function renderChapter(idx) {
+  const ch = CHAPTERS[idx];
+  const mood = SCENE_MOODS[idx];
+
+  updateProgress(idx);
+
+  // Background & glow
+  document.getElementById('sceneBg').dataset.scene = idx;
+  document.getElementById('sceneGlow').style.background = mood.glow;
+
+  // Hero visual
+  const heroEmoji = document.getElementById('sceneEmoji');
+  heroEmoji.textContent = mood.emoji;
+  heroEmoji.style.animation = 'none';
+  heroEmoji.offsetHeight; // reflow
+  heroEmoji.style.animation = '';
+
+  document.getElementById('sceneTime').textContent = 'CHAPTER ' + CHAPTER_WORDS[idx] + ' · ' + ch.time;
+
+  // Text
+  document.getElementById('sceneHeading').innerHTML = ch.heading;
+  document.getElementById('sceneQuestion').textContent = ch.question;
+
+  // Choices
+  const area = document.getElementById('choicesArea');
+  area.innerHTML = '';
+  area.className = 'choices-area' + (ch.fourCol ? ' grid-layout' : '');
+
+  ch.choices.forEach((c, i) => {
+    const card = document.createElement('button');
+    card.className = 'v-choice';
+    card.style.animationDelay = (i * 0.07) + 's';
+    card.innerHTML = `
+      <div class="v-choice-icon">${c.icon}</div>
+      <div class="v-choice-label">${c.text}</div>`;
+    card.addEventListener('click', () => { if (!picking) selectChoice(c, card); });
+    area.appendChild(card);
+  });
+
+  // Reveal
+  document.getElementById('sceneVisual').classList.remove('fading');
+  document.getElementById('sceneText').classList.remove('fading');
+  area.classList.remove('fading');
+}
+
+/* ─── SELECT CHOICE ─── */
+async function selectChoice(choice, cardEl) {
+  picking = true;
+
+  Object.entries(choice.signals).forEach(([dim, val]) => {
+    if (dimSums[dim]) { dimSums[dim].sum += val; dimSums[dim].count++; }
+  });
+
+  cardEl.classList.add('selected');
+  await sleep(300);
+
+  // Fade out
+  document.getElementById('sceneVisual').classList.add('fading');
+  document.getElementById('sceneText').classList.add('fading');
+  document.getElementById('choicesArea').classList.add('fading');
+  await sleep(400);
+
+  // Bridge
+  const bridge = document.getElementById('bridge');
+  document.getElementById('bridgeEmoji').textContent = choice.bridgeEmoji || '✨';
+  document.getElementById('bridgeText').innerHTML = choice.note.replace(/\n/g, '<br>');
+  bridge.classList.add('show');
+  await sleep(1300);
+  bridge.classList.remove('show');
+  await sleep(380);
+
+  currentChapter++;
+  if (currentChapter >= CHAPTERS.length) {
+    document.getElementById('seg-5').className = 'progress-seg done';
+    goScreen('dietary');
+  } else {
+    renderChapter(currentChapter);
+  }
+  picking = false;
+}
+
+/* ─── START ─── */
+function startStory() {
+  currentChapter = 0;
+  DIMS.forEach(d => { dimSums[d] = { sum:0, count:0 }; });
+  renderChapter(0);
+  goScreen('story');
+}
+
+/* ─── DIETARY ─── */
+function buildDietaryGrid() {
+  const grid = document.getElementById('dietaryGrid');
+  DIETARY_OPTIONS.forEach(opt => {
+    const t = document.createElement('button');
+    t.className = 'tile' + (opt.id === 'none' ? ' selected' : '');
+    t.dataset.id = opt.id;
+    t.innerHTML = `<span class="tile-emoji">${opt.emoji}</span><span class="tile-label">${opt.label}</span>`;
+    t.addEventListener('click', () => toggleDietary(opt.id, t));
+    grid.appendChild(t);
+  });
+}
+function toggleDietary(id, tile) {
+  if (id === 'none') {
+    state.dietary.clear(); state.dietary.add('none');
+    document.querySelectorAll('#dietaryGrid .tile').forEach(t => t.classList.toggle('selected', t.dataset.id === 'none'));
+    return;
+  }
+  state.dietary.delete('none');
+  document.querySelector('#dietaryGrid [data-id="none"]')?.classList.remove('selected');
+  if (state.dietary.has(id)) { state.dietary.delete(id); tile.classList.remove('selected'); }
+  else { state.dietary.add(id); tile.classList.add('selected'); }
+  if (state.dietary.size === 0) { state.dietary.add('none'); document.querySelector('#dietaryGrid [data-id="none"]')?.classList.add('selected'); }
+}
+
+/* ─── ISLAND ─── */
+function buildIslandGrid() {
+  const grid = document.getElementById('islandGrid');
+  ISLAND_OPTIONS.forEach(opt => {
+    const t = document.createElement('button');
+    t.className = 'tile';
+    t.dataset.id = opt.id;
+    t.innerHTML = `<span class="tile-emoji">${opt.emoji}</span><span class="tile-label">${opt.label}</span>`;
+    t.addEventListener('click', () => {
+      state.island = opt.id;
+      document.querySelectorAll('#islandGrid .tile').forEach(x => x.classList.toggle('selected', x.dataset.id === opt.id));
+      document.getElementById('islandNextBtn').disabled = false;
+    });
+    grid.appendChild(t);
+  });
+}
+
+/* ─── SCORING ─── */
+function computeScores() {
+  const s = {};
+  DIMS.forEach(d => { const { sum, count } = dimSums[d]; s[d] = count > 0 ? parseFloat((sum / count).toFixed(2)) : 5; });
+  return s;
+}
+function getArchetype(s) { for (const a of ARCHETYPES) { if (a.condition(s)) return a; } return DEFAULT_ARCHETYPE; }
+
+function buildPayload(scores) {
+  let dietary = 'no_restrictions';
+  if (state.dietary.has('vegan')) dietary = 'vegan';
+  else if (state.dietary.has('vegetarian')) dietary = 'vegetarian';
+  else if (state.dietary.has('gluten_free')) dietary = 'gluten_free';
+  else if (state.dietary.has('shellfish') || state.dietary.has('dairy_free')) dietary = 'pescatarian';
+
+  let cuisine = 'local_hawaiian';
+  if (scores.adventurousness >= 7 && scores.flavor_complexity >= 6) cuisine = 'world_cuisine';
+  else if (scores.local_engagement >= 7) cuisine = 'local_hawaiian';
+  else if (scores.flavor_complexity >= 7) cuisine = 'modern_fusion';
+  else if (scores.health_orientation >= 7) cuisine = 'healthy_light';
+  else if (scores.adventurousness <= 4) cuisine = 'comfort_casual';
+  else if (scores.flavor_complexity >= 5) cuisine = 'japanese_pacific';
+
+  let atmosphere = 'beach_outdoor';
+  if (scores.format_preference >= 8) atmosphere = 'upscale_elegant';
+  else if (scores.social_context >= 7) atmosphere = 'lively_social';
+  else if (scores.format_preference >= 6) atmosphere = 'scenic_unique';
+  else if (scores.adventurousness <= 4) atmosphere = 'cozy_local';
+
+  let occasion = 'solo_explorer';
+  if (scores.social_context >= 7) occasion = 'friends_group';
+  else if (scores.format_preference >= 7) occasion = 'romantic_date';
+  else if (scores.social_context >= 4) occasion = 'friends_group';
+  else if (scores.adventurousness >= 7) occasion = 'adventurous';
+
+  let budget = 2;
+  if (scores.price_orientation >= 8) budget = 4;
+  else if (scores.price_orientation >= 6) budget = 3;
+  else if (scores.price_orientation >= 4) budget = 2;
+  else budget = 1;
+
+  return {
+    dietary, occasion, cuisine, atmosphere, budget,
+    noise_pref: Math.min(4, Math.max(1, Math.round(1 + (scores.social_context / 10) * 3))),
+    island: state.island || 'any',
+    current_time: new Date().getHours(),
+  };
+}
+
+/* ─── PROCESSING ─── */
+async function buildTasteID() {
+  if (!state.island) return;
+  goScreen('processing');
+
+  const scores = computeScores();
+  const archetype = getArchetype(scores);
+  state.tasteScores = scores;
+  state.archetype = archetype;
+
+  const payload = buildPayload(scores);
+  const steps = ['pstep-1','pstep-2','pstep-3','pstep-4','pstep-5'];
+  for (let i = 0; i < steps.length - 1; i++) {
+    document.getElementById(steps[i]).classList.add('active');
+    await sleep(380);
+    document.getElementById(steps[i]).classList.remove('active');
+    document.getElementById(steps[i]).classList.add('done');
+  }
+  document.getElementById(steps[4]).classList.add('active');
+
+  let results = [], error = null;
+  try {
+    const res = await fetch('http://localhost:8001/recommend', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+    if (!res.ok) throw new Error('Server returned ' + res.status);
+    const data = await res.json();
+    results = data.recommendations || [];
+  } catch (e) { error = e.message; }
+
+  document.getElementById(steps[4]).classList.remove('active');
+  document.getElementById(steps[4]).classList.add('done');
+  await sleep(300);
+
+  renderResults(scores, archetype, results, error);
+  goScreen('results');
+}
+
+/* ─── RESULTS ─── */
+function renderResults(scores, archetype, results, error) {
+  document.getElementById('archetypeIcon').textContent = archetype.icon;
+  document.getElementById('archetypeName').textContent = archetype.name;
+  document.getElementById('archetypeDesc').textContent = archetype.desc;
+
+  const dims = document.getElementById('tasteDims');
+  dims.innerHTML = '';
+  Object.entries(DIM_LABELS).forEach(([key, label]) => {
+    const val = scores[key] ?? 5;
+    const pct = (val / 10 * 100).toFixed(0);
+    const row = document.createElement('div');
+    row.className = 'dim-row';
+    row.innerHTML = `<div class="dim-header"><span>${label}</span><span class="dim-val">${val.toFixed(1)}</span></div><div class="dim-track"><div class="dim-fill" data-width="${pct}%"></div></div>`;
+    dims.appendChild(row);
+  });
+  requestAnimationFrame(() => {
+    setTimeout(() => { document.querySelectorAll('.dim-fill').forEach(el => { el.style.width = el.dataset.width; }); }, 400);
+  });
+
+  const list = document.getElementById('resultsList');
+  list.innerHTML = '';
+  if (error) {
+    list.innerHTML = `<div class="error-box"><p><strong>Couldn't reach the restaurant server.</strong> Make sure the backend is running on port 8001.</p><p style="margin-top:8px;font-size:12px;opacity:0.7;">Error: ${error}</p></div>`;
+    return;
+  }
+  if (!results.length) { list.innerHTML = '<p style="font-size:13px;color:var(--muted);">No restaurants matched. Try adjusting island or budget.</p>'; return; }
+
+  results.slice(0, 10).forEach((r, i) => {
+    const rest = r.restaurant || r;
+    const score = ((r.final_score ?? r.score ?? 0) * 100).toFixed(0);
+    const name = rest.name || 'Unknown';
+    const island = rest.island || '';
+    const price = rest.price_range ? '$'.repeat(rest.price_range) : '';
+    const reasons = r.explanation || [];
+    const topReason = reasons.length > 0 ? reasons[0] : '';
+    const tags = [rest.cuisine, rest.vibe || '', island].filter(Boolean);
+
+    const card = document.createElement('div');
+    card.className = 'rest-card';
+    card.style.animationDelay = (i * 0.06) + 's';
+    card.innerHTML = `<div class="rest-inner">
+      <div class="rest-rank ${i === 0 ? 'top' : ''}">${i === 0 ? '★' : i + 1}</div>
+      <div class="rest-body">
+        <div class="rest-name">${name}</div>
+        <div class="rest-meta">${island ? island.replace('_',' ').replace(/\b\w/g, c => c.toUpperCase()) : ''} ${price ? '· ' + price : ''}</div>
+        ${topReason ? '<div class="rest-reasons">"' + topReason + '"</div>' : ''}
+        <div class="rest-tags">${tags.map(t => '<span class="rest-tag">' + t + '</span>').join('')}</div>
+      </div>
+      <div class="rest-score"><div class="score-pill">${score}%</div></div>
+    </div>`;
+    list.appendChild(card);
+  });
+}
+
+/* ─── ACCORDION ─── */
+function toggleAcc(head) {
+  const body = head.nextElementSibling;
+  const isOpen = body.classList.contains('open');
+  document.querySelectorAll('.acc-body').forEach(b => b.classList.remove('open'));
+  document.querySelectorAll('.acc-head').forEach(h => h.classList.remove('open'));
+  if (!isOpen) { body.classList.add('open'); head.classList.add('open'); }
+}
+
+/* ─── UTILS ─── */
+function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+/* ─── INIT ─── */
+buildDietaryGrid();
+buildIslandGrid();
+initParticles();
+
+</script>
+</body>
+</html>

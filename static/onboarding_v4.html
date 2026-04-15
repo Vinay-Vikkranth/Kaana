@@ -1,0 +1,770 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Ka'ana - V4 Layered Meal Builder</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700;900&family=DM+Serif+Display&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #ede8de;
+      --surface: #ffffff;
+      --text: #1a1510;
+      --muted: #6b5e52;
+      --line: #1a1510;
+      --accent: #b8705a;
+      --accent2: #f2a65a;
+      --shadow: 4px 4px 0 #1a1510;
+      --shadow-sm: 2px 2px 0 #1a1510;
+      --sans: "DM Sans", system-ui, sans-serif;
+      --serif: "DM Serif Display", Georgia, serif;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { height: 100%; }
+    body { font-family: var(--sans); background: var(--bg); color: var(--text); overflow: hidden; }
+    .screen { display: none; position: fixed; inset: 0; }
+    .screen.active { display: flex; }
+    .scroll-screen { overflow-y: auto; justify-content: center; padding: 36px 20px 56px; }
+
+    #screen-welcome {
+      background: radial-gradient(circle at 20% 20%, #4c2f24 0%, #2f1b15 45%, #1a120e 100%);
+      color: #ede8de;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 24px;
+    }
+    .logo { font-size: 11px; font-weight: 900; letter-spacing: .28em; text-transform: uppercase; border: 1.5px solid rgba(255,255,255,.24); padding: 7px 18px; margin-bottom: 30px; }
+    .badge { font-size: 10px; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; border: 1.5px solid var(--accent2); color: var(--accent2); padding: 3px 10px; margin-bottom: 14px; }
+    .hero-title { font-family: var(--serif); font-size: clamp(42px, 9.3vw, 74px); line-height: .95; margin-bottom: 12px; }
+    .hero-sub { max-width: 470px; font-size: 14px; line-height: 1.62; color: rgba(255,255,255,.76); margin-bottom: 28px; }
+    .stats { max-width: 460px; width: 100%; display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 30px; }
+    .stat { border: 1px solid rgba(255,255,255,.2); background: rgba(255,255,255,.05); padding: 12px 8px; font-size: 11px; line-height: 1.3; font-weight: 700; }
+    .stat b { display: block; font-size: 21px; margin-bottom: 5px; }
+    .btn-main { width: 100%; max-width: 460px; border: none; background: var(--accent2); color: #1a1510; padding: 15px 18px; font-size: 13px; font-weight: 900; text-transform: uppercase; letter-spacing: .08em; cursor: pointer; }
+    .back-link { margin-top: 12px; color: rgba(255,255,255,.6); text-decoration: none; font-size: 12px; font-weight: 600; }
+
+    #screen-game {
+      background: linear-gradient(180deg, #1a120e 0%, #2a1c15 100%);
+      color: #efe8dd;
+      flex-direction: column;
+      overflow: hidden;
+    }
+    .game-top { padding: 16px 16px 0; flex-shrink: 0; }
+    .progress { display: flex; gap: 6px; margin-bottom: 12px; }
+    .seg { flex: 1; height: 3px; background: rgba(255,255,255,.12); position: relative; overflow: hidden; }
+    .seg::after { content: ""; position: absolute; inset: 0; transform: scaleX(0); transform-origin: left; background: var(--accent2); transition: transform .25s; }
+    .seg.done::after, .seg.active::after { transform: scaleX(1); }
+    .seg.active::after { background: #efe8dd; }
+    .meta { display: flex; justify-content: space-between; margin-bottom: 4px; }
+    .meta-tag { font-size: 10px; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; color: var(--accent2); }
+    .meta-count { font-size: 11px; color: rgba(255,255,255,.45); font-weight: 700; }
+    .q-title { font-family: var(--serif); font-size: clamp(24px, 5vw, 40px); line-height: 1.05; margin-bottom: 6px; }
+    .q-sub { font-size: 13px; color: rgba(255,255,255,.7); margin-bottom: 12px; }
+
+    .game-main { flex: 1; min-height: 0; display: grid; grid-template-columns: 1.08fr .92fr; gap: 14px; padding: 0 16px 16px; }
+    @media (max-width: 960px) { .game-main { grid-template-columns: 1fr; overflow-y: auto; } }
+
+    .options-panel {
+      border: 1.5px solid rgba(255,255,255,.18);
+      background: rgba(0,0,0,.24);
+      padding: 12px;
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      align-content: start;
+    }
+    @media (max-width: 680px) { .options-panel { grid-template-columns: 1fr; } }
+    .ingredient {
+      border: 1.5px solid rgba(255,255,255,.2);
+      background: rgba(255,255,255,.06);
+      padding: 12px;
+      cursor: pointer;
+      user-select: none;
+      transition: transform .12s, border-color .12s, background .12s;
+      text-align: left;
+    }
+    .ingredient:hover { transform: translateY(-1px); border-color: rgba(255,255,255,.45); }
+    .ingredient.selected { border-color: var(--accent2); background: rgba(242,166,90,.18); }
+    .i-emoji { font-size: 28px; margin-bottom: 6px; display: block; }
+    .i-title { font-size: 13px; font-weight: 800; line-height: 1.3; margin-bottom: 3px; }
+    .i-sub { font-size: 11px; color: rgba(255,255,255,.68); line-height: 1.35; }
+
+    .plate-panel {
+      border: 1.5px solid rgba(255,255,255,.2);
+      background: rgba(0,0,0,.22);
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+      min-height: 430px;
+    }
+    .plate-title { font-size: 10px; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; color: rgba(255,255,255,.62); margin-bottom: 8px; }
+    .scene-canvas {
+      flex: 1;
+      border: 2px solid rgba(255,255,255,.24);
+      position: relative;
+      overflow: hidden;
+      min-height: 320px;
+      background: linear-gradient(180deg, #2f221b 0%, #1f1712 70%);
+    }
+    .atmo-layer {
+      position: absolute; inset: 0;
+      opacity: .85;
+      transition: background .25s, opacity .25s;
+    }
+    .table-layer {
+      position: absolute; left: 0; right: 0; bottom: 0;
+      height: 42%;
+      background: linear-gradient(180deg, #6b4a37 0%, #4b3326 100%);
+      border-top: 2px solid rgba(255,255,255,.08);
+    }
+    .plate-wrap {
+      position: absolute;
+      left: 50%;
+      bottom: 22%;
+      transform: translateX(-50%);
+      width: 230px; height: 230px;
+      border-radius: 50%;
+      background: #efe8dd;
+      border: 4px solid #fff;
+      box-shadow: 0 14px 28px rgba(0,0,0,.3), inset 0 0 0 2px #d3c7b4;
+    }
+    .food-layer {
+      position: absolute;
+      left: 50%; top: 50%;
+      transform: translate(-50%, -50%);
+      width: 130px; height: 130px;
+      border-radius: 50%;
+      background: #c89260;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 62px;
+      box-shadow: 0 8px 20px rgba(0,0,0,.22);
+      transition: background .2s;
+    }
+    .overlay-chip {
+      position: absolute;
+      border: 2px solid #1a1510;
+      background: #f7ecd8;
+      color: #1a1510;
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: .08em;
+      padding: 4px 8px;
+      font-weight: 800;
+    }
+    .chip-social { top: 10px; right: 10px; }
+    .chip-budget { top: 10px; left: 10px; }
+    .chip-atmo { bottom: 12px; right: 10px; }
+    .chip-finish { bottom: 12px; left: 10px; }
+    .plate-summary {
+      margin-top: 10px;
+      font-size: 12px;
+      color: rgba(255,255,255,.75);
+      line-height: 1.45;
+      min-height: 34px;
+    }
+    .game-actions { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-top: 10px; }
+    .hint { font-size: 11px; color: rgba(255,255,255,.56); }
+    .btn-next {
+      border: none; background: var(--accent2); color: #1a1510;
+      padding: 11px 18px; font-size: 12px; text-transform: uppercase; font-weight: 900; letter-spacing: .08em; cursor: pointer;
+    }
+    .btn-next:disabled { opacity: .35; cursor: not-allowed; }
+
+    .constraint { background: #13100e; color: #ece7de; flex-direction: column; align-items: center; overflow-y: auto; }
+    .constraint-inner { max-width: 520px; width: 100%; padding: 40px 22px; margin: auto; }
+    .c-badge { font-size: 10px; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; color: var(--accent2); border: 1px solid var(--accent2); display: inline-block; padding: 3px 9px; margin-bottom: 14px; }
+    .c-title { font-family: var(--serif); font-size: clamp(28px, 6vw, 42px); line-height: 1.06; margin-bottom: 8px; }
+    .c-sub { color: rgba(255,255,255,.58); font-size: 13px; line-height: 1.6; margin-bottom: 22px; }
+    .tile-grid { display: grid; grid-template-columns: repeat(2,1fr); gap: 9px; margin-bottom: 24px; }
+    @media (min-width: 430px) { .tile-grid { grid-template-columns: repeat(3,1fr); } }
+    .tile { border: 1px solid rgba(255,255,255,.16); background: rgba(255,255,255,.05); color: #ece7de; padding: 16px 10px; display: flex; flex-direction: column; align-items: center; gap: 8px; cursor: pointer; }
+    .tile.selected { border-color: var(--accent2); background: rgba(242,166,90,.16); }
+    .tile-emoji { font-size: 26px; }
+    .tile-label { font-size: 10px; text-transform: uppercase; font-weight: 700; letter-spacing: .06em; color: rgba(255,255,255,.66); text-align: center; }
+    .c-nav { display: flex; justify-content: space-between; align-items: center; }
+    .btn-ghost { border: none; background: none; color: rgba(255,255,255,.58); font-size: 12px; font-weight: 600; cursor: pointer; }
+
+    #screen-processing { background: #13100e; color: #ece7de; align-items: center; justify-content: center; }
+    .proc { max-width: 320px; text-align: center; }
+    .ring { width: 52px; height: 52px; margin: 0 auto 20px; border: 2px solid rgba(255,255,255,.12); border-top-color: var(--accent2); border-radius: 50%; animation: spin 1s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .proc h3 { font-family: var(--serif); font-size: 29px; line-height: 1.1; margin-bottom: 6px; }
+    .proc p { color: rgba(255,255,255,.56); font-size: 12px; margin-bottom: 16px; }
+    .steps { list-style: none; text-align: left; display: flex; flex-direction: column; gap: 8px; }
+    .step { font-size: 11px; text-transform: uppercase; letter-spacing: .08em; color: rgba(255,255,255,.2); font-weight: 700; }
+    .step.active { color: var(--accent2); }
+    .step.done { color: rgba(255,255,255,.52); }
+
+    #screen-results { background: var(--bg); color: var(--text); }
+    .results { width: 100%; max-width: 700px; }
+    .arch { border: 2px solid var(--line); box-shadow: var(--shadow); background: #1a1510; color: #ede8de; padding: 24px 28px; margin-bottom: 24px; }
+    .arch-tag { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .14em; opacity: .55; margin-bottom: 7px; }
+    .arch-name { font-family: var(--serif); font-size: clamp(28px, 5.6vw, 44px); line-height: 1.05; margin-bottom: 8px; }
+    .arch-desc { font-size: 13px; line-height: 1.6; opacity: .82; }
+    .title { font-size: 24px; text-transform: uppercase; font-weight: 900; margin-bottom: 3px; }
+    .sub { font-size: 13px; color: var(--muted); margin-bottom: 18px; }
+    .dims { display: grid; grid-template-columns: 1fr 1fr; gap: 12px 20px; margin-bottom: 20px; }
+    @media (max-width: 520px) { .dims { grid-template-columns: 1fr; } }
+    .dim-top { display: flex; justify-content: space-between; font-size: 10px; text-transform: uppercase; font-weight: 700; letter-spacing: .08em; margin-bottom: 4px; }
+    .track { height: 6px; background: rgba(26,21,16,.12); }
+    .fill { height: 100%; background: var(--accent); width: 0; transition: width 1s ease; }
+    .actions { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 20px; }
+    .btn-pal { border: 2px solid var(--line); box-shadow: var(--shadow-sm); background: var(--surface); color: var(--text); padding: 10px 15px; font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; text-decoration: none; cursor: pointer; }
+    .btn-pal-ghost { border: none; background: none; color: var(--muted); padding: 10px 4px; font-size: 12px; font-weight: 600; text-decoration: none; }
+    .list { display: flex; flex-direction: column; gap: 10px; }
+    .card { border: 2px solid var(--line); background: var(--surface); box-shadow: var(--shadow-sm); display: flex; }
+    .rank { width: 46px; border-right: 2px solid var(--line); background: #e8e1d4; display: flex; align-items: center; justify-content: center; font-weight: 900; }
+    .rank.top { background: var(--accent); color: #fff; }
+    .body { padding: 12px 14px; flex: 1; min-width: 0; }
+    .name { font-size: 14px; font-weight: 900; text-transform: uppercase; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .meta-txt { font-size: 11px; color: var(--muted); margin-top: 2px; }
+    .reason { font-size: 11px; color: var(--muted); margin-top: 6px; font-style: italic; }
+    .score { border-left: 2px solid var(--line); padding: 12px; display: flex; align-items: center; }
+    .pill { border: 2px solid var(--line); background: var(--accent2); color: #1a1510; padding: 4px 8px; font-size: 12px; font-weight: 900; }
+
+    #screen-why { background: var(--bg); color: var(--text); }
+    .why { width: 100%; max-width: 660px; }
+    .why-badge { display: inline-block; border: 1.5px solid var(--accent); color: var(--accent); font-size: 10px; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; padding: 3px 10px; margin-bottom: 12px; }
+    .why h2 { font-size: 30px; text-transform: uppercase; font-weight: 900; margin-bottom: 8px; }
+    .why .lead { font-size: 14px; color: var(--muted); line-height: 1.6; margin-bottom: 22px; }
+    .acc { border: 2px solid var(--line); border-bottom: 0; }
+    .acc:last-of-type { border-bottom: 2px solid var(--line); }
+    .acc-btn { width: 100%; border: none; background: var(--surface); color: var(--text); padding: 14px 16px; text-align: left; font-size: 13px; font-weight: 800; text-transform: uppercase; letter-spacing: .04em; cursor: pointer; display: flex; justify-content: space-between; gap: 8px; }
+    .acc-body { display: none; background: #ece5d8; padding: 0 16px 16px; font-size: 13px; line-height: 1.65; color: #5f5247; }
+    .acc.open .acc-body { display: block; }
+    .why-actions { margin-top: 20px; display: flex; flex-wrap: wrap; gap: 10px; }
+  </style>
+</head>
+<body>
+  <div id="screen-welcome" class="screen active">
+    <div class="logo">KA'ANA</div>
+    <div class="badge">Version 4 - Layered Meal Builder</div>
+    <h1 class="hero-title">Build the Plate,<br>Build the Night.</h1>
+    <p class="hero-sub">Every step adds a visible layer: base, topping, flavor, atmosphere, social context, budget, and finish. The visual composition evolves as your Taste ID forms.</p>
+    <div class="stats">
+      <div class="stat"><b>7</b>layer steps</div>
+      <div class="stat"><b>~80s</b>interaction</div>
+      <div class="stat"><b>1</b>composed scene</div>
+    </div>
+    <button class="btn-main" onclick="startGame()">Start Layered Build</button>
+    <a class="back-link" href="/selector.html">Try another version</a>
+  </div>
+
+  <div id="screen-game" class="screen">
+    <div class="game-top">
+      <div class="progress" id="progress"></div>
+      <div class="meta">
+        <div class="meta-tag" id="metaTag">Layer 1</div>
+        <div class="meta-count" id="metaCount">1 / 7</div>
+      </div>
+      <div class="q-title" id="qTitle"></div>
+      <div class="q-sub" id="qSub"></div>
+    </div>
+    <div class="game-main">
+      <div class="options-panel" id="optionsPanel"></div>
+      <div class="plate-panel">
+        <div class="plate-title">Live Composition</div>
+        <div class="scene-canvas" id="sceneCanvas">
+          <div class="atmo-layer" id="atmoLayer"></div>
+          <div class="table-layer"></div>
+          <div class="plate-wrap">
+            <div class="food-layer" id="foodLayer">🍕</div>
+          </div>
+          <div class="overlay-chip chip-budget" id="chipBudget">Budget · -</div>
+          <div class="overlay-chip chip-social" id="chipSocial">Social · -</div>
+          <div class="overlay-chip chip-atmo" id="chipAtmo">Atmosphere · -</div>
+          <div class="overlay-chip chip-finish" id="chipFinish">Finish · -</div>
+        </div>
+        <div class="plate-summary" id="plateSummary">Choose your first layer to begin composing the scene.</div>
+        <div class="game-actions">
+          <div class="hint">Select one option per layer</div>
+          <button class="btn-next" id="nextBtn" onclick="nextLayer()" disabled>Next Layer</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="screen-dietary" class="screen constraint">
+    <div class="constraint-inner">
+      <div class="c-badge">Almost there</div>
+      <h2 class="c-title">Any dietary restrictions?</h2>
+      <p class="c-sub">We'll remove restaurants that cannot accommodate your needs.</p>
+      <div class="tile-grid" id="dietaryGrid"></div>
+      <div class="c-nav">
+        <button class="btn-ghost" onclick="goScreen('game')">Back</button>
+        <button class="btn-next" onclick="goScreen('island')">Continue</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="screen-island" class="screen constraint">
+    <div class="constraint-inner">
+      <div class="c-badge">Last step</div>
+      <h2 class="c-title">Which island are you on?</h2>
+      <p class="c-sub">Recommendations are filtered to where you can actually dine.</p>
+      <div class="tile-grid" id="islandGrid"></div>
+      <div class="c-nav">
+        <button class="btn-ghost" onclick="goScreen('dietary')">Back</button>
+        <button class="btn-next" id="islandNextBtn" onclick="buildTasteID()" disabled>Find My Restaurants</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="screen-processing" class="screen">
+    <div class="proc">
+      <div class="ring"></div>
+      <h3>Scoring Your<br>Composed Plate</h3>
+      <p>Converting layer decisions into the same 8-dimension Taste ID.</p>
+      <ul class="steps">
+        <li class="step" id="pstep-1">Reading selected layers</li>
+        <li class="step" id="pstep-2">Applying confidence weights</li>
+        <li class="step" id="pstep-3">Building payload</li>
+        <li class="step" id="pstep-4">Querying vector index</li>
+        <li class="step" id="pstep-5">Ranking top matches</li>
+      </ul>
+    </div>
+  </div>
+
+  <div id="screen-results" class="screen scroll-screen">
+    <div class="results">
+      <div class="arch">
+        <div class="arch-tag">Your Food Archetype</div>
+        <div class="arch-name" id="archetypeName">The Explorer</div>
+        <div class="arch-desc" id="archetypeDesc">You seek unfamiliar places with local character and bold stories.</div>
+      </div>
+      <div class="title">Top Matches</div>
+      <div class="sub">Recommendations from your layered build and constraints.</div>
+      <div class="dims" id="tasteDims"></div>
+      <div class="actions">
+        <button class="btn-pal" onclick="goScreen('why')">See the Science</button>
+        <a class="btn-pal-ghost" href="/selector.html">Try another version</a>
+      </div>
+      <div class="list" id="resultsList"></div>
+    </div>
+  </div>
+
+  <div id="screen-why" class="screen scroll-screen">
+    <div class="why">
+      <div class="why-badge">Methodology</div>
+      <h2>Why This Works</h2>
+      <p class="lead">V4 now measures cumulative composition decisions. Each layer affects both the meal and context scene, creating a coherent behavioral profile rather than isolated picks.</p>
+      <div class="acc">
+        <button class="acc-btn" onclick="toggleAcc(this)">Why layered composition? <span>▼</span></button>
+        <div class="acc-body">Users naturally understand "build this plate" tasks. Layering avoids abrupt context switching and creates better continuity for preference elicitation.</div>
+      </div>
+      <div class="acc">
+        <button class="acc-btn" onclick="toggleAcc(this)">How behavior affects scoring <span>▼</span></button>
+        <div class="acc-body">Base deltas come from the chosen layer option. Decision speed and hover-switching scale each layer with a confidence multiplier.</div>
+      </div>
+      <div class="acc">
+        <button class="acc-btn" onclick="toggleAcc(this)">How this maps to backend <span>▼</span></button>
+        <div class="acc-body">Payload contract remains unchanged: dietary, occasion, cuisine, atmosphere, budget, noise preference, island, and current time.</div>
+      </div>
+      <div class="why-actions">
+        <button class="btn-pal" onclick="goScreen('results')">Back to Results</button>
+        <a class="btn-pal" href="/selector.html">All Versions</a>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const DIM_LABELS = {
+      adventurousness: "Adventurousness",
+      spice_tolerance: "Spice Tolerance",
+      health_orientation: "Health Focus",
+      flavor_complexity: "Flavor Complexity",
+      price_orientation: "Price Willingness",
+      social_context: "Social Energy",
+      local_engagement: "Local Engagement",
+      format_preference: "Dining Format"
+    };
+    const DIMS = Object.keys(DIM_LABELS);
+
+    const LAYERS = [
+      {
+        key: "base", title: "Pick your base plate.",
+        sub: "This sets the foundation of tonight's meal.",
+        options: [
+          { emoji: "🍕", title: "Pizza Base", sub: "Comfort-forward start", foodColor: "#d99d67", delta: { adventurousness: -1, price_orientation: -1, health_orientation: -1 } },
+          { emoji: "🍚", title: "Rice Bowl Base", sub: "Balanced and versatile", foodColor: "#d6c7ad", delta: { health_orientation: 1, flavor_complexity: 1 } },
+          { emoji: "🥗", title: "Greens Base", sub: "Fresh and light", foodColor: "#89c27b", delta: { health_orientation: 3, adventurousness: 1 } }
+        ]
+      },
+      {
+        key: "topping", title: "Add your main topping.",
+        sub: "Like chicken pepperoni vs cheese on pizza, choose your core add-on.",
+        options: [
+          { emoji: "🍗", title: "Chicken Pepperoni", sub: "Savory, bold edge", foodColor: "#b85c4a", delta: { flavor_complexity: 2, adventurousness: 1, health_orientation: -1 } },
+          { emoji: "🧀", title: "Cheese Layer", sub: "Classic rich comfort", foodColor: "#f0cf6c", delta: { adventurousness: -1, flavor_complexity: 1, health_orientation: -2 } },
+          { emoji: "🐟", title: "Local Fish Topping", sub: "Island-forward protein", foodColor: "#77b9d6", delta: { local_engagement: 3, health_orientation: 2 } }
+        ]
+      },
+      {
+        key: "flavor", title: "Choose flavor profile.",
+        sub: "Set the dominant taste direction.",
+        options: [
+          { emoji: "🌶️", title: "Smoked Chili", sub: "Heat and intensity", foodColor: "#e8572a", delta: { spice_tolerance: 3, adventurousness: 2 } },
+          { emoji: "🍋", title: "Citrus Herb", sub: "Bright and clean", foodColor: "#e7d26b", delta: { health_orientation: 1, flavor_complexity: 2 } },
+          { emoji: "🧈", title: "Brown Butter", sub: "Rich and indulgent", foodColor: "#d3a25a", delta: { health_orientation: -2, flavor_complexity: 1, price_orientation: 1 } }
+        ]
+      },
+      {
+        key: "atmosphere", title: "Set the atmosphere.",
+        sub: "This should update the scene around the plate.",
+        options: [
+          { emoji: "🕯️", title: "Candlelight Dinner", sub: "Intimate and warm", atmosphere: "linear-gradient(180deg,#3a2218 0%,#2a1812 62%)", chip: "Candlelight", delta: { format_preference: 2, price_orientation: 1, social_context: -1 } },
+          { emoji: "👨‍👩‍👧", title: "Family Dinner", sub: "Comfortable and lively", atmosphere: "linear-gradient(180deg,#2f3422 0%,#242817 62%)", chip: "Family", delta: { social_context: 2, format_preference: 1, adventurousness: -1 } },
+          { emoji: "🌅", title: "Sunset View", sub: "Scenic and elevated", atmosphere: "linear-gradient(180deg,#5b2f25 0%,#3a2218 62%)", chip: "Scenic", delta: { format_preference: 2, local_engagement: 1, price_orientation: 1 } }
+        ]
+      },
+      {
+        key: "social", title: "Who's at the table?",
+        sub: "Choose the social energy for tonight.",
+        options: [
+          { emoji: "🧍", title: "Solo", sub: "Quiet and focused", chip: "Solo", delta: { social_context: -3, format_preference: 1 } },
+          { emoji: "💑", title: "Date", sub: "Intimate and curated", chip: "Date", delta: { social_context: -1, format_preference: 2, price_orientation: 1 } },
+          { emoji: "👥", title: "Friends", sub: "Shared table momentum", chip: "Friends", delta: { social_context: 3, adventurousness: 1 } }
+        ]
+      },
+      {
+        key: "budget", title: "Set spend style.",
+        sub: "How should value feel for this meal?",
+        options: [
+          { emoji: "💰", title: "Value-first", sub: "Keep it lean", chip: "Value", delta: { price_orientation: -3 } },
+          { emoji: "⚖️", title: "Balanced", sub: "Fair spend", chip: "Balanced", delta: { price_orientation: 0 } },
+          { emoji: "💫", title: "Premium", sub: "Worth the splurge", chip: "Premium", delta: { price_orientation: 3, format_preference: 1 } }
+        ]
+      },
+      {
+        key: "finish", title: "Add final finishing touch.",
+        sub: "Complete the dish and lock your profile.",
+        options: [
+          { emoji: "🌺", title: "Local Floral Finish", sub: "Island signature", chip: "Local", delta: { local_engagement: 3, adventurousness: 1 } },
+          { emoji: "🌱", title: "Microgreen Finish", sub: "Fresh clean close", chip: "Fresh", delta: { health_orientation: 2 } },
+          { emoji: "🔥", title: "Fire Char Finish", sub: "Bold final note", chip: "Char", delta: { adventurousness: 2, flavor_complexity: 2, spice_tolerance: 1 } }
+        ]
+      }
+    ];
+
+    const DIETARY_OPTIONS = [
+      { id: "none", label: "No Restrictions", emoji: "✅" }, { id: "vegetarian", label: "Vegetarian", emoji: "🥦" },
+      { id: "vegan", label: "Vegan", emoji: "🌱" }, { id: "gluten_free", label: "Gluten-Free", emoji: "🌾" },
+      { id: "halal", label: "Halal", emoji: "☪️" }, { id: "kosher", label: "Kosher", emoji: "✡️" },
+      { id: "shellfish", label: "No Shellfish", emoji: "🦞" }, { id: "dairy_free", label: "Dairy-Free", emoji: "🥛" },
+      { id: "nut_allergy", label: "Nut Allergy", emoji: "🥜" }
+    ];
+    const ISLAND_OPTIONS = [
+      { id: "oahu", label: "O'ahu", emoji: "🌺" }, { id: "maui", label: "Maui", emoji: "🌊" },
+      { id: "big_island", label: "Big Island", emoji: "🌋" }, { id: "kauai", label: "Kaua'i", emoji: "🌿" },
+      { id: "molokai", label: "Moloka'i", emoji: "🐠" }, { id: "lanai", label: "Lana'i", emoji: "🦋" }
+    ];
+    const ARCHETYPES = [
+      { name: "The Explorer", condition: s => s.adventurousness >= 7 && s.local_engagement >= 6, desc: "You seek unfamiliar places with local character and bold stories." },
+      { name: "The Connoisseur", condition: s => s.price_orientation >= 7 && s.flavor_complexity >= 7, desc: "You gravitate to craftsmanship, precision, and layered technique." },
+      { name: "The Social Feaster", condition: s => s.social_context >= 7, desc: "Meals are social rituals. You optimize for shared momentum." },
+      { name: "The Health Seeker", condition: s => s.health_orientation >= 7, desc: "You pursue nourishment and freshness without sacrificing pleasure." },
+      { name: "The Comfort Lover", condition: s => s.adventurousness <= 4 && s.health_orientation <= 4, desc: "You trust dependable favorites that always deliver." },
+      { name: "The Value Hunter", condition: s => s.price_orientation <= 3, desc: "You maximize quality-per-dollar with disciplined picks." }
+    ];
+    const DEFAULT_ARCHETYPE = { name: "The Balanced Eater", desc: "Your choices adapt fluidly to context, mood, and company." };
+
+    const state = {
+      layerIndex: 0,
+      selectedOption: null,
+      scores: Object.fromEntries(DIMS.map(d => [d, 5])),
+      chosen: {},
+      dietary: new Set(["none"]),
+      island: null
+    };
+    const behavior = { layerStartMs: 0, hoverSwitches: 0, lastHoverOption: null };
+
+    function clamp(v, min, max) { return Math.max(min, Math.min(max, v)); }
+    function round2(v) { return Math.round(v * 100) / 100; }
+    function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+    function goScreen(id) {
+      document.querySelectorAll(".screen").forEach(s => s.classList.remove("active"));
+      const next = document.getElementById("screen-" + id);
+      next.classList.add("active");
+      if (next.classList.contains("scroll-screen")) next.scrollTop = 0;
+    }
+
+    function startGame() {
+      state.layerIndex = 0;
+      state.selectedOption = null;
+      state.scores = Object.fromEntries(DIMS.map(d => [d, 5]));
+      state.chosen = {};
+      applySceneFromChosen();
+      renderLayer();
+      goScreen("game");
+    }
+
+    function renderLayer() {
+      const layer = LAYERS[state.layerIndex];
+      const progress = document.getElementById("progress");
+      progress.innerHTML = "";
+      for (let i = 0; i < LAYERS.length; i++) {
+        const seg = document.createElement("div");
+        seg.className = "seg" + (i < state.layerIndex ? " done" : i === state.layerIndex ? " active" : "");
+        progress.appendChild(seg);
+      }
+      document.getElementById("metaTag").textContent = "Layer " + (state.layerIndex + 1) + " · " + layer.key;
+      document.getElementById("metaCount").textContent = (state.layerIndex + 1) + " / " + LAYERS.length;
+      document.getElementById("qTitle").textContent = layer.title;
+      document.getElementById("qSub").textContent = layer.sub;
+      document.getElementById("nextBtn").disabled = true;
+      state.selectedOption = null;
+
+      const panel = document.getElementById("optionsPanel");
+      panel.innerHTML = "";
+      layer.options.forEach((opt, idx) => {
+        const card = document.createElement("button");
+        card.className = "ingredient";
+        card.innerHTML = '<span class="i-emoji">' + opt.emoji + '</span><div class="i-title">' + opt.title + '</div><div class="i-sub">' + opt.sub + "</div>";
+        card.addEventListener("mouseenter", () => trackHover(idx));
+        card.addEventListener("click", () => selectOption(idx));
+        panel.appendChild(card);
+      });
+
+      behavior.layerStartMs = performance.now();
+      behavior.hoverSwitches = 0;
+      behavior.lastHoverOption = null;
+      document.getElementById("plateSummary").textContent = "Add a " + layer.key + " layer to continue.";
+    }
+
+    function trackHover(idx) {
+      if (behavior.lastHoverOption !== null && behavior.lastHoverOption !== idx) behavior.hoverSwitches++;
+      behavior.lastHoverOption = idx;
+    }
+
+    function selectOption(idx) {
+      state.selectedOption = idx;
+      document.querySelectorAll(".ingredient").forEach((el, i) => el.classList.toggle("selected", i === idx));
+      const layer = LAYERS[state.layerIndex];
+      const opt = layer.options[idx];
+      state.chosen[layer.key] = opt;
+      applySceneFromChosen();
+      document.getElementById("plateSummary").textContent = layer.key + " set to " + opt.title + ".";
+      document.getElementById("nextBtn").disabled = false;
+    }
+
+    function applySceneFromChosen() {
+      const chosen = state.chosen;
+      const food = document.getElementById("foodLayer");
+      const atmo = document.getElementById("atmoLayer");
+      const chipAtmo = document.getElementById("chipAtmo");
+      const chipSocial = document.getElementById("chipSocial");
+      const chipBudget = document.getElementById("chipBudget");
+      const chipFinish = document.getElementById("chipFinish");
+
+      const base = chosen.base || { emoji: "🍕", foodColor: "#d99d67" };
+      const topping = chosen.topping || null;
+      const flavor = chosen.flavor || null;
+      const finish = chosen.finish || null;
+
+      const mainEmoji = (finish && finish.emoji) || (flavor && flavor.emoji) || (topping && topping.emoji) || base.emoji;
+      let color = base.foodColor || "#c89260";
+      if (topping && topping.foodColor) color = topping.foodColor;
+      if (flavor && flavor.foodColor) color = flavor.foodColor;
+      if (finish && finish.foodColor) color = finish.foodColor;
+
+      food.textContent = mainEmoji;
+      food.style.background = color;
+
+      atmo.style.background = (chosen.atmosphere && chosen.atmosphere.atmosphere) || "linear-gradient(180deg, rgba(65,40,30,.28) 0%, rgba(25,16,12,.22) 65%)";
+      chipAtmo.textContent = "Atmosphere · " + ((chosen.atmosphere && chosen.atmosphere.chip) || "-");
+      chipSocial.textContent = "Social · " + ((chosen.social && chosen.social.chip) || "-");
+      chipBudget.textContent = "Budget · " + ((chosen.budget && chosen.budget.chip) || "-");
+      chipFinish.textContent = "Finish · " + ((chosen.finish && chosen.finish.chip) || "-");
+    }
+
+    function nextLayer() {
+      if (state.selectedOption === null) return;
+      const layer = LAYERS[state.layerIndex];
+      const opt = layer.options[state.selectedOption];
+
+      const elapsed = performance.now() - behavior.layerStartMs;
+      const speedScore = clamp(1 - (elapsed - 900) / 5000, 0.45, 1.15);
+      const hesitationPenalty = clamp(1 - behavior.hoverSwitches * 0.06, 0.62, 1);
+      const confidence = speedScore * hesitationPenalty;
+
+      Object.entries(opt.delta).forEach(([dim, raw]) => {
+        if (!(dim in state.scores)) return;
+        state.scores[dim] = clamp(state.scores[dim] + raw * confidence, 0, 10);
+      });
+
+      state.layerIndex++;
+      if (state.layerIndex >= LAYERS.length) {
+        goScreen("dietary");
+      } else {
+        renderLayer();
+      }
+    }
+
+    function buildDietaryGrid() {
+      const grid = document.getElementById("dietaryGrid");
+      DIETARY_OPTIONS.forEach(opt => {
+        const tile = document.createElement("button");
+        tile.className = "tile" + (opt.id === "none" ? " selected" : "");
+        tile.dataset.id = opt.id;
+        tile.innerHTML = '<span class="tile-emoji">' + opt.emoji + '</span><span class="tile-label">' + opt.label + "</span>";
+        tile.addEventListener("click", () => toggleDietary(opt.id, tile));
+        grid.appendChild(tile);
+      });
+    }
+    function toggleDietary(id, tile) {
+      if (id === "none") {
+        state.dietary.clear(); state.dietary.add("none");
+        document.querySelectorAll("#dietaryGrid .tile").forEach(t => t.classList.toggle("selected", t.dataset.id === "none"));
+        return;
+      }
+      state.dietary.delete("none");
+      document.querySelector('#dietaryGrid [data-id="none"]').classList.remove("selected");
+      if (state.dietary.has(id)) { state.dietary.delete(id); tile.classList.remove("selected"); }
+      else { state.dietary.add(id); tile.classList.add("selected"); }
+      if (!state.dietary.size) { state.dietary.add("none"); document.querySelector('#dietaryGrid [data-id="none"]').classList.add("selected"); }
+    }
+
+    function buildIslandGrid() {
+      const grid = document.getElementById("islandGrid");
+      ISLAND_OPTIONS.forEach(opt => {
+        const tile = document.createElement("button");
+        tile.className = "tile";
+        tile.dataset.id = opt.id;
+        tile.innerHTML = '<span class="tile-emoji">' + opt.emoji + '</span><span class="tile-label">' + opt.label + "</span>";
+        tile.addEventListener("click", () => {
+          state.island = opt.id;
+          document.querySelectorAll("#islandGrid .tile").forEach(t => t.classList.toggle("selected", t.dataset.id === opt.id));
+          document.getElementById("islandNextBtn").disabled = false;
+        });
+        grid.appendChild(tile);
+      });
+    }
+
+    function computeScores() {
+      const out = {};
+      DIMS.forEach(d => out[d] = round2(clamp(state.scores[d], 0, 10)));
+      return out;
+    }
+    function getArchetype(scores) {
+      for (const a of ARCHETYPES) if (a.condition(scores)) return a;
+      return DEFAULT_ARCHETYPE;
+    }
+    function buildPayload(scores) {
+      let dietary = "no_restrictions";
+      if (state.dietary.has("vegan")) dietary = "vegan";
+      else if (state.dietary.has("vegetarian")) dietary = "vegetarian";
+      else if (state.dietary.has("gluten_free")) dietary = "gluten_free";
+      else if (state.dietary.has("shellfish") || state.dietary.has("dairy_free")) dietary = "pescatarian";
+
+      let cuisine = "local_hawaiian";
+      if (scores.adventurousness >= 7 && scores.flavor_complexity >= 6) cuisine = "world_cuisine";
+      else if (scores.local_engagement >= 7) cuisine = "local_hawaiian";
+      else if (scores.flavor_complexity >= 7) cuisine = "modern_fusion";
+      else if (scores.health_orientation >= 7) cuisine = "healthy_light";
+      else if (scores.adventurousness <= 4) cuisine = "comfort_casual";
+      else if (scores.flavor_complexity >= 5) cuisine = "japanese_pacific";
+
+      let atmosphere = "beach_outdoor";
+      if (scores.format_preference >= 8) atmosphere = "upscale_elegant";
+      else if (scores.social_context >= 7) atmosphere = "lively_social";
+      else if (scores.format_preference >= 6) atmosphere = "scenic_unique";
+      else if (scores.adventurousness <= 4) atmosphere = "cozy_local";
+
+      let occasion = "solo_explorer";
+      if (scores.social_context >= 7) occasion = "friends_group";
+      else if (scores.format_preference >= 7) occasion = "romantic_date";
+      else if (scores.social_context >= 4) occasion = "friends_group";
+      else if (scores.adventurousness >= 7) occasion = "adventurous";
+
+      let budget = 2;
+      if (scores.price_orientation >= 8) budget = 4;
+      else if (scores.price_orientation >= 6) budget = 3;
+      else if (scores.price_orientation >= 4) budget = 2;
+      else budget = 1;
+
+      return {
+        dietary, occasion, cuisine, atmosphere, budget,
+        noise_pref: Math.min(4, Math.max(1, Math.round(1 + (scores.social_context / 10) * 3))),
+        island: state.island || "any",
+        current_time: new Date().getHours()
+      };
+    }
+
+    async function buildTasteID() {
+      if (!state.island) return;
+      goScreen("processing");
+      const scores = computeScores();
+      const archetype = getArchetype(scores);
+      const payload = buildPayload(scores);
+      const steps = ["pstep-1", "pstep-2", "pstep-3", "pstep-4", "pstep-5"];
+      for (let i = 0; i < steps.length - 1; i++) {
+        document.getElementById(steps[i]).classList.add("active");
+        await sleep(350);
+        document.getElementById(steps[i]).classList.remove("active");
+        document.getElementById(steps[i]).classList.add("done");
+      }
+      document.getElementById(steps[4]).classList.add("active");
+
+      let results = [], error = null;
+      try {
+        const res = await fetch("http://localhost:8001/recommend", {
+          method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload)
+        });
+        if (!res.ok) throw new Error("Server returned " + res.status);
+        const data = await res.json();
+        results = data.recommendations || [];
+      } catch (e) { error = e.message; }
+
+      document.getElementById(steps[4]).classList.remove("active");
+      document.getElementById(steps[4]).classList.add("done");
+      await sleep(240);
+      renderResults(scores, archetype, results, error);
+      goScreen("results");
+    }
+
+    function renderResults(scores, archetype, results, error) {
+      document.getElementById("archetypeName").textContent = archetype.name;
+      document.getElementById("archetypeDesc").textContent = archetype.desc;
+      const dims = document.getElementById("tasteDims");
+      dims.innerHTML = "";
+      Object.entries(DIM_LABELS).forEach(([key, label]) => {
+        const val = scores[key] ?? 5;
+        const pct = (val / 10) * 100;
+        const row = document.createElement("div");
+        row.innerHTML = '<div class="dim-top"><span>' + label + "</span><span>" + val.toFixed(1) + '</span></div><div class="track"><div class="fill" data-width="' + pct + '%"></div></div>';
+        dims.appendChild(row);
+      });
+      setTimeout(() => document.querySelectorAll(".fill").forEach(f => f.style.width = f.dataset.width), 280);
+
+      const list = document.getElementById("resultsList");
+      list.innerHTML = "";
+      if (error) { list.innerHTML = '<div class="card"><div class="body"><div class="name">Connection issue</div><div class="reason">Could not reach backend on port 8001. Error: ' + error + "</div></div></div>"; return; }
+      if (!results.length) { list.innerHTML = '<div class="card"><div class="body"><div class="name">No matches</div><div class="reason">Try another island or onboarding version.</div></div></div>'; return; }
+      results.slice(0, 10).forEach((r, i) => {
+        const rest = r.restaurant || r;
+        const score = ((r.final_score ?? r.score ?? 0) * 100).toFixed(0);
+        const island = rest.island ? rest.island.replace("_", " ").replace(/\b\w/g, c => c.toUpperCase()) : "";
+        const price = rest.price_range ? "$".repeat(rest.price_range) : "";
+        const topReason = (r.explanation || [])[0] || "";
+        const card = document.createElement("div");
+        card.className = "card";
+        card.innerHTML = '<div class="rank ' + (i === 0 ? "top" : "") + '">' + (i === 0 ? "★" : (i + 1)) + '</div><div class="body"><div class="name">' + (rest.name || "Unknown") + '</div><div class="meta-txt">' + island + (price ? " · " + price : "") + '</div>' + (topReason ? '<div class="reason">"' + topReason + '"</div>' : "") + '</div><div class="score"><div class="pill">' + score + "%</div></div>";
+        list.appendChild(card);
+      });
+    }
+
+    function toggleAcc(btn) {
+      const parent = btn.parentElement;
+      const open = parent.classList.contains("open");
+      document.querySelectorAll(".acc").forEach(a => a.classList.remove("open"));
+      if (!open) parent.classList.add("open");
+    }
+
+    buildDietaryGrid();
+    buildIslandGrid();
+  </script>
+</body>
+</html>

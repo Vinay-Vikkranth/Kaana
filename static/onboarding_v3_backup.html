@@ -1,0 +1,1172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Ka'ana — The Evening</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700;900&display=swap" rel="stylesheet" />
+  <style>
+    /* ─── TOKENS ─── */
+    :root {
+      --bg:        #ede8de;
+      --surface:   #ffffff;
+      --accent:    #b8705a;
+      --accent-dk: #9a5c48;
+      --text:      #1a1510;
+      --muted:     #6b5e52;
+      --border:    #1a1510;
+      --shadow:    4px 4px 0 #1a1510;
+      --shadow-sm: 2px 2px 0 #1a1510;
+      --font:      'DM Sans', system-ui, sans-serif;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html, body {
+      height: 100%;
+      font-family: var(--font);
+      color: var(--text);
+      background: var(--bg);
+      overflow: hidden;
+    }
+
+    /* ─── SCREEN SYSTEM ─── */
+    .screen {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: var(--bg);
+    }
+    .screen.active { display: flex; }
+    .screen.scroll {
+      overflow-y: auto;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-start;
+      padding: 40px 20px 60px;
+    }
+
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(14px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    .screen.scroll.active { animation: fadeUp 0.35s ease both; }
+
+    /* ─── TYPOGRAPHY ─── */
+    .label-tag {
+      display: inline-block;
+      font-size: 11px; font-weight: 700;
+      letter-spacing: 0.12em; text-transform: uppercase;
+      color: var(--accent); border: 1.5px solid var(--accent);
+      padding: 3px 10px; margin-bottom: 14px;
+    }
+    .btn {
+      display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+      font-family: var(--font); font-size: 13px; font-weight: 700;
+      text-transform: uppercase; letter-spacing: 0.08em;
+      cursor: pointer; border: 2px solid var(--border);
+      padding: 14px 32px;
+      transition: transform 0.1s, box-shadow 0.1s;
+      text-decoration: none; color: inherit; background: transparent;
+    }
+    .btn:active { transform: translate(2px,2px); box-shadow: none !important; }
+    .btn-primary { background: var(--accent); color: #fff; box-shadow: var(--shadow); }
+    .btn-primary:hover { background: var(--accent-dk); }
+    .btn-outline { box-shadow: var(--shadow-sm); }
+    .btn-outline:hover { background: var(--surface); }
+    .btn-ghost { border-color: transparent; box-shadow: none; color: var(--muted); font-size: 12px; }
+    .btn-ghost:hover { color: var(--text); }
+
+    /* ─── CONSTRAINT TILES ─── */
+    .constraint-grid {
+      display: grid; grid-template-columns: repeat(2, 1fr);
+      gap: 10px; width: 100%; max-width: 480px; margin-bottom: 28px;
+    }
+    @media (min-width: 400px) { .constraint-grid { grid-template-columns: repeat(3, 1fr); } }
+    .constraint-tile {
+      display: flex; flex-direction: column; align-items: center;
+      gap: 6px; padding: 16px 10px;
+      border: 2px solid var(--border); background: var(--surface);
+      box-shadow: var(--shadow-sm); cursor: pointer;
+      transition: transform 0.1s, box-shadow 0.1s, background 0.1s;
+      font-family: var(--font);
+    }
+    .constraint-tile:hover { transform: translate(-1px,-1px); box-shadow: var(--shadow); }
+    .constraint-tile.selected { background: var(--accent); color: #fff; border-color: var(--accent-dk); box-shadow: var(--shadow); transform: translate(-2px,-2px); }
+    .tile-emoji { font-size: 24px; }
+    .tile-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em; text-align: center; line-height: 1.2; }
+
+    .island-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; width: 100%; max-width: 480px; margin-bottom: 28px; }
+    @media (min-width: 480px) { .island-grid { grid-template-columns: repeat(3, 1fr); } }
+
+    .nav-row { display: flex; align-items: center; justify-content: space-between; width: 100%; max-width: 480px; margin-top: 8px; }
+
+    /* ─── PROCESSING ─── */
+    .processing-box {
+      border: 2px solid var(--border); background: var(--surface);
+      box-shadow: var(--shadow); padding: 40px 48px;
+      display: flex; flex-direction: column; align-items: center;
+      gap: 16px; max-width: 340px; text-align: center;
+    }
+    .spinner { width: 48px; height: 48px; border: 3px solid rgba(26,21,16,0.15); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.9s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .processing-steps { list-style: none; display: flex; flex-direction: column; gap: 8px; text-align: left; width: 100%; }
+    .processing-step { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em; color: rgba(26,21,16,0.3); display: flex; align-items: center; gap: 8px; transition: color 0.3s; }
+    .processing-step.done   { color: #16a34a; }
+    .processing-step.active { color: var(--accent); }
+    .step-dot { width: 8px; height: 8px; border-radius: 50%; background: currentColor; flex-shrink: 0; }
+
+    /* ─── RESULTS ─── */
+    .archetype-card {
+      border: 2px solid var(--border); background: var(--text);
+      box-shadow: var(--shadow); padding: 24px 28px;
+      width: 100%; margin-bottom: 24px; color: var(--bg);
+    }
+    .archetype-tag { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.15em; opacity: 0.6; margin-bottom: 6px; }
+    .archetype-name { font-size: clamp(22px,5vw,36px); font-weight: 900; text-transform: uppercase; letter-spacing: -0.02em; margin-bottom: 10px; line-height: 1.05; }
+    .archetype-desc { font-size: 13px; font-weight: 500; line-height: 1.6; opacity: 0.8; }
+
+    .taste-dims { display: grid; grid-template-columns: 1fr 1fr; gap: 10px 24px; width: 100%; margin-bottom: 28px; }
+    .dim-row { display: flex; flex-direction: column; gap: 4px; }
+    .dim-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; display: flex; justify-content: space-between; }
+    .dim-score { color: var(--accent); }
+    .dim-track { height: 6px; background: var(--bg); border: 1.5px solid rgba(26,21,16,0.2); }
+    .dim-fill  { height: 100%; background: var(--accent); transition: width 1s ease; }
+
+    .results-list { display: flex; flex-direction: column; gap: 12px; width: 100%; }
+    .result-card { border: 2px solid var(--border); background: var(--surface); box-shadow: var(--shadow-sm); overflow: hidden; transition: transform 0.12s, box-shadow 0.12s; }
+    .result-card:hover { transform: translate(-2px,-2px); box-shadow: var(--shadow); }
+    .result-inner { display: flex; align-items: stretch; }
+    .result-rank { width: 48px; background: var(--bg); border-right: 2px solid var(--border); display: flex; align-items: center; justify-content: center; font-size: 20px; font-weight: 900; color: var(--muted); flex-shrink: 0; }
+    .result-rank.top1 { background: var(--accent); color: #fff; font-size: 24px; }
+    .result-body { padding: 14px 16px; flex: 1; min-width: 0; }
+    .result-name { font-size: 16px; font-weight: 900; text-transform: uppercase; letter-spacing: -0.01em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .result-meta { font-size: 11px; color: var(--muted); font-weight: 500; margin-top: 4px; }
+    .result-tags { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 8px; }
+    .result-tag { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em; border: 1.5px solid var(--border); padding: 2px 7px; background: var(--bg); }
+    .result-score { padding: 14px 16px; display: flex; align-items: center; border-left: 2px solid var(--border); flex-shrink: 0; }
+    .score-pill { background: var(--accent); color: #fff; font-size: 14px; font-weight: 900; padding: 6px 12px; border: 2px solid var(--border); }
+    .error-box { border: 2px solid #dc2626; background: #fef2f2; padding: 16px 20px; width: 100%; }
+    .error-box p { font-size: 13px; font-weight: 500; color: #991b1b; }
+
+    /* ─── WHY ACCORDION ─── */
+    .accordion { display: flex; flex-direction: column; gap: 0; width: 100%; margin-bottom: 32px; }
+    .accordion-item { border: 2px solid var(--border); border-bottom: none; }
+    .accordion-item:last-child { border-bottom: 2px solid var(--border); }
+    .accordion-head { display: flex; align-items: center; justify-content: space-between; padding: 16px 20px; cursor: pointer; background: var(--surface); transition: background 0.15s; gap: 12px; border: none; width: 100%; font-family: var(--font); text-align: left; }
+    .accordion-head:hover, .accordion-head.open { background: var(--bg); }
+    .accordion-title { font-size: 13px; font-weight: 900; text-transform: uppercase; letter-spacing: 0.04em; display: flex; align-items: center; gap: 10px; }
+    .acc-icon { font-size: 18px; }
+    .acc-arrow { font-size: 12px; color: var(--muted); transition: transform 0.25s; flex-shrink: 0; }
+    .accordion-head.open .acc-arrow { transform: rotate(180deg); }
+    .accordion-body { display: none; padding: 0 20px 20px; background: var(--bg); border-top: 1.5px solid rgba(26,21,16,0.15); }
+    .accordion-body.open { display: block; animation: fadeUp 0.2s ease; }
+    .accordion-body p { font-size: 13px; font-weight: 500; color: var(--muted); line-height: 1.7; margin-top: 12px; }
+    .accordion-body p + p { margin-top: 8px; }
+    .accordion-body strong { color: var(--text); font-weight: 700; }
+    .cite-item { padding: 10px 14px; border-left: 3px solid var(--accent); background: var(--surface); border-top: 1px solid rgba(26,21,16,0.1); border-right: 1px solid rgba(26,21,16,0.1); border-bottom: 1px solid rgba(26,21,16,0.1); margin-top: 8px; }
+    .cite-title { font-size: 12px; font-weight: 700; margin-bottom: 2px; }
+    .cite-meta  { font-size: 11px; color: var(--muted); font-weight: 500; }
+
+    /* ════════════════════════════════════════════
+       STORY SCREEN
+    ════════════════════════════════════════════ */
+    #screen-story {
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    /* Chapter progress — 6 bars at top */
+    .chapter-progress {
+      display: flex;
+      gap: 4px;
+      padding: 16px 24px 0;
+      flex-shrink: 0;
+      position: relative;
+      z-index: 10;
+    }
+    .ch-seg {
+      flex: 1;
+      height: 3px;
+      background: rgba(26,21,16,0.15);
+      transition: background 0.4s;
+    }
+    .ch-seg.done   { background: var(--accent); }
+    .ch-seg.active { background: var(--text); }
+
+    /* Story area — fills available space, content pinned to bottom */
+    .story-area {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-end;
+      padding: 24px 28px 28px;
+      min-height: 0;
+      transition: opacity 0.4s ease;
+    }
+
+    .scene-tag {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 16px;
+    }
+    .scene-emoji-lg { font-size: 22px; }
+
+    .story-heading {
+      font-size: clamp(30px, 6.5vw, 54px);
+      font-weight: 900;
+      line-height: 1.0;
+      letter-spacing: -0.025em;
+      text-transform: uppercase;
+      margin-bottom: 18px;
+      max-width: 600px;
+    }
+
+    .story-rule {
+      width: 48px;
+      height: 2px;
+      background: var(--accent);
+      margin-bottom: 14px;
+    }
+
+    .story-question {
+      font-size: 13px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--accent);
+    }
+
+    /* Choices area — sits at bottom, content slides up */
+    .choices-area {
+      flex-shrink: 0;
+      padding: 0 24px 28px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      transition: opacity 0.4s ease;
+    }
+
+    /* 2-column layout for 4 choices on wider screens */
+    @media (min-width: 560px) {
+      .choices-area.two-col {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 8px;
+      }
+    }
+
+    /* Choice cards */
+    .choice-card {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 14px 18px;
+      border: 2px solid var(--border);
+      background: var(--surface);
+      box-shadow: var(--shadow-sm);
+      cursor: pointer;
+      font-family: var(--font);
+      text-align: left;
+      transition: transform 0.1s, box-shadow 0.1s, background 0.15s, border-color 0.15s;
+      animation: choiceSlide 0.3s ease both;
+    }
+    @keyframes choiceSlide {
+      from { opacity: 0; transform: translateY(12px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    .choice-card:hover { transform: translate(-2px, -2px); box-shadow: var(--shadow); }
+    .choice-card:active { transform: translate(1px,1px); box-shadow: none; }
+    .choice-card.selected {
+      background: var(--text); color: var(--bg);
+      border-color: var(--text); box-shadow: var(--shadow);
+    }
+    .choice-icon { font-size: 22px; flex-shrink: 0; line-height: 1; }
+    .choice-text { font-size: 13px; font-weight: 700; line-height: 1.35; }
+
+    /* Stagger animation per card */
+    .choice-card:nth-child(1) { animation-delay: 0.05s; }
+    .choice-card:nth-child(2) { animation-delay: 0.10s; }
+    .choice-card:nth-child(3) { animation-delay: 0.15s; }
+    .choice-card:nth-child(4) { animation-delay: 0.20s; }
+
+    /* ─── NARRATIVE BRIDGE OVERLAY ─── */
+    #narrativeBridge {
+      position: fixed;
+      inset: 0;
+      background: var(--bg);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      z-index: 100;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.35s ease;
+      padding: 32px;
+    }
+    #narrativeBridge.show { opacity: 1; pointer-events: auto; }
+
+    .bridge-eyebrow {
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin-bottom: 16px;
+    }
+    .bridge-text {
+      font-size: clamp(24px, 5vw, 44px);
+      font-weight: 900;
+      text-transform: uppercase;
+      letter-spacing: -0.02em;
+      text-align: center;
+      line-height: 1.1;
+      max-width: 480px;
+      color: var(--text);
+    }
+    .bridge-rule {
+      width: 40px; height: 2px;
+      background: var(--accent);
+      margin-top: 20px;
+    }
+
+  </style>
+</head>
+<body>
+
+<!-- ════════════════════════════════════════════
+     SCREEN 0 — WELCOME
+════════════════════════════════════════════ -->
+<div id="screen-welcome" class="screen scroll active">
+  <div style="max-width:480px;width:100%;display:flex;flex-direction:column;align-items:center;text-align:center;">
+    <div style="font-size:13px;font-weight:900;letter-spacing:0.25em;text-transform:uppercase;padding:8px 20px;border:2px solid var(--border);margin-bottom:48px;">
+      KA'ANA
+    </div>
+    <span class="label-tag">Version 3 — The Evening</span>
+    <h1 style="font-size:clamp(32px,7vw,56px);font-weight:900;text-transform:uppercase;letter-spacing:-0.025em;line-height:1.0;margin-bottom:14px;">
+      A Short Story<br/>About Dinner.
+    </h1>
+    <p style="font-size:14px;color:var(--muted);font-weight:500;line-height:1.6;margin-bottom:36px;max-width:360px;">
+      We tell a story. You make the decisions.
+      Six moments, six choices — each one reveals something real about how you eat.
+    </p>
+
+    <div style="display:flex;flex-direction:column;gap:10px;width:100%;margin-bottom:32px;text-align:left;">
+      <div style="display:flex;align-items:center;gap:14px;padding:14px 18px;border:2px solid var(--border);background:var(--surface);box-shadow:var(--shadow-sm);">
+        <span style="font-size:22px;">📖</span>
+        <span style="font-size:13px;font-weight:500;line-height:1.4;"><strong>A story unfolds.</strong> You're the main character. Every choice is yours.</span>
+      </div>
+      <div style="display:flex;align-items:center;gap:14px;padding:14px 18px;border:2px solid var(--border);background:var(--surface);box-shadow:var(--shadow-sm);">
+        <span style="font-size:22px;">🎭</span>
+        <span style="font-size:13px;font-weight:500;line-height:1.4;"><strong>6 chapters.</strong> Each one sounds like life, not like a form.</span>
+      </div>
+      <div style="display:flex;align-items:center;gap:14px;padding:14px 18px;border:2px solid var(--border);background:var(--surface);box-shadow:var(--shadow-sm);">
+        <span style="font-size:22px;">🧬</span>
+        <span style="font-size:13px;font-weight:500;line-height:1.4;"><strong>Discover your food archetype.</strong> The Connoisseur? The Explorer? The Social Feaster?</span>
+      </div>
+    </div>
+
+    <button class="btn btn-primary" onclick="startStory()" style="font-size:14px;padding:16px 48px;width:100%;">
+      Begin the Story →
+    </button>
+    <a href="/selector.html" class="btn btn-ghost" style="margin-top:12px;">← Try another version</a>
+    <p style="font-size:12px;color:var(--muted);margin-top:16px;">6 chapters · about 90 seconds</p>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════
+     SCREEN 1 — THE STORY
+════════════════════════════════════════════ -->
+<div id="screen-story" class="screen">
+
+  <!-- Chapter progress (6 bars) -->
+  <div class="chapter-progress" id="chapterProgress">
+    <div class="ch-seg" id="seg-0"></div>
+    <div class="ch-seg" id="seg-1"></div>
+    <div class="ch-seg" id="seg-2"></div>
+    <div class="ch-seg" id="seg-3"></div>
+    <div class="ch-seg" id="seg-4"></div>
+    <div class="ch-seg" id="seg-5"></div>
+  </div>
+
+  <!-- Story text area -->
+  <div class="story-area" id="storyArea">
+    <div class="scene-tag">
+      <span class="scene-emoji-lg" id="sceneEmoji">🌆</span>
+      <span id="sceneTime">Friday, 6:30 PM</span>
+    </div>
+    <div class="story-heading" id="storyHeading">Work is done.<br/>The evening is yours.</div>
+    <div class="story-rule"></div>
+    <div class="story-question" id="storyQuestion">Who's joining you tonight?</div>
+  </div>
+
+  <!-- Choice cards -->
+  <div class="choices-area" id="choicesArea"></div>
+
+</div>
+
+<!-- ════════════════════════════════════════════
+     SCREEN 2 — DIETARY
+════════════════════════════════════════════ -->
+<div id="screen-dietary" class="screen scroll">
+  <div style="max-width:480px;width:100%;display:flex;flex-direction:column;align-items:flex-start;">
+    <span class="label-tag">One more thing</span>
+    <h2 style="font-size:clamp(20px,4vw,30px);font-weight:900;text-transform:uppercase;margin-bottom:8px;">Any must-knows?</h2>
+    <p style="font-size:14px;color:var(--muted);font-weight:500;margin-bottom:24px;line-height:1.5;">We'll never show you somewhere that can't work for you.</p>
+    <div class="constraint-grid" id="dietaryGrid"></div>
+    <div class="nav-row">
+      <button class="btn btn-ghost" onclick="goScreen('story')">← Back</button>
+      <button class="btn btn-primary" onclick="goScreen('island')">Next →</button>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════
+     SCREEN 3 — ISLAND
+════════════════════════════════════════════ -->
+<div id="screen-island" class="screen scroll">
+  <div style="max-width:480px;width:100%;display:flex;flex-direction:column;align-items:flex-start;">
+    <span class="label-tag">Last one</span>
+    <h2 style="font-size:clamp(20px,4vw,30px);font-weight:900;text-transform:uppercase;margin-bottom:8px;">Which island?</h2>
+    <p style="font-size:14px;color:var(--muted);font-weight:500;margin-bottom:24px;line-height:1.5;">Only restaurants you can actually get to.</p>
+    <div class="island-grid" id="islandGrid"></div>
+    <div class="nav-row">
+      <button class="btn btn-ghost" onclick="goScreen('dietary')">← Back</button>
+      <button class="btn btn-primary" id="islandNextBtn" onclick="buildTasteID()"
+              style="opacity:0.4;cursor:not-allowed;" disabled>Build My Taste ID →</button>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════
+     SCREEN 4 — PROCESSING
+════════════════════════════════════════════ -->
+<div id="screen-processing" class="screen" style="align-items:center;justify-content:center;">
+  <div class="processing-box">
+    <div class="spinner"></div>
+    <div>
+      <div style="font-size:14px;font-weight:900;text-transform:uppercase;letter-spacing:0.04em;margin-bottom:4px;">Building Your<br/>Taste ID</div>
+      <div style="font-size:11px;color:var(--muted);font-weight:500;">Just a moment…</div>
+    </div>
+    <ul class="processing-steps" id="processingSteps">
+      <li class="processing-step" id="pstep-1"><span class="step-dot"></span>Reading your story choices</li>
+      <li class="processing-step" id="pstep-2"><span class="step-dot"></span>Identifying your archetype</li>
+      <li class="processing-step" id="pstep-3"><span class="step-dot"></span>Generating taste vector</li>
+      <li class="processing-step" id="pstep-4"><span class="step-dot"></span>Querying restaurant index</li>
+      <li class="processing-step" id="pstep-5"><span class="step-dot"></span>Ranking your matches</li>
+    </ul>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════
+     SCREEN 5 — RESULTS
+════════════════════════════════════════════ -->
+<div id="screen-results" class="screen scroll">
+  <div style="max-width:680px;width:100%;">
+
+    <!-- Archetype card — the hero element -->
+    <div class="archetype-card" id="archetypeCard">
+      <div class="archetype-tag">Your Food Archetype</div>
+      <div class="archetype-name" id="archetypeName">The Explorer</div>
+      <div class="archetype-desc" id="archetypeDesc">You seek the undiscovered.</div>
+    </div>
+
+    <h2 style="font-size:clamp(18px,3.5vw,26px);font-weight:900;text-transform:uppercase;margin-bottom:6px;">Your Top Matches</h2>
+    <p style="font-size:13px;color:var(--muted);font-weight:500;margin-bottom:16px;">Based on the evening you just described.</p>
+
+    <!-- 8 taste dimensions -->
+    <div class="taste-dims" id="tasteDims" style="margin-bottom:24px;"></div>
+
+    <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:28px;">
+      <button class="btn btn-outline" onclick="goScreen('why')" style="font-size:12px;padding:10px 20px;">🔬 See the Science →</button>
+      <button class="btn btn-ghost" onclick="location.href='/selector.html'" style="font-size:12px;">← Try another version</button>
+    </div>
+
+    <div class="results-list" id="resultsList">
+      <p style="font-size:13px;color:var(--muted);">Loading…</p>
+    </div>
+
+    <div style="height:40px;"></div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════
+     SCREEN 6 — WHY THIS WORKS
+════════════════════════════════════════════ -->
+<div id="screen-why" class="screen scroll">
+  <div style="max-width:640px;width:100%;">
+    <span class="label-tag" style="margin-top:8px;">Methodology</span>
+    <h2 style="font-size:clamp(20px,4vw,30px);font-weight:900;text-transform:uppercase;margin-bottom:8px;">Why This Works</h2>
+    <p style="font-size:14px;color:var(--muted);font-weight:500;line-height:1.6;margin-bottom:28px;">
+      The story felt casual. The science behind it is anything but. Here's what each chapter was actually measuring.
+    </p>
+
+    <div class="accordion">
+
+      <div class="accordion-item">
+        <button class="accordion-head" onclick="toggleAcc(this)">
+          <span class="accordion-title"><span class="acc-icon">📖</span> Why a story and not a form?</span>
+          <span class="acc-arrow">▼</span>
+        </button>
+        <div class="accordion-body">
+          <p>When people know they're being assessed, they perform. Ask someone "how adventurous are you as an eater?" and they say 7 — because nobody wants to say 3. This is called <strong>social desirability bias</strong>, and it poisons most food preference questionnaires.</p>
+          <p>A story bypasses this entirely. When you're making decisions for a character in a narrative — even one that's obviously you — you engage <strong>System 1 thinking</strong> (fast, instinctive, honest) rather than System 2 (slow, analytical, performative). Your choices reflect genuine preference, not a curated self-image.</p>
+          <p>This approach is grounded in <strong>scenario-based preference elicitation</strong>, widely used in behavioural economics to measure willingness-to-pay and consumer preference without the distortions of direct questioning.</p>
+        </div>
+      </div>
+
+      <div class="accordion-item">
+        <button class="accordion-head" onclick="toggleAcc(this)">
+          <span class="accordion-title"><span class="acc-icon">🎭</span> What did each chapter measure?</span>
+          <span class="acc-arrow">▼</span>
+        </button>
+        <div class="accordion-body">
+          <p><strong>Chapter 1 — Who's joining you?</strong><br/>
+          Directly captures social_context and format_preference. A solo night implies focused, solo-friendly dining. Family implies inclusive, noise-tolerant settings. The companion choice also modulates price_orientation — date night correlates strongly with higher spend willingness.</p>
+          <p><strong>Chapter 2 — How are you feeling?</strong><br/>
+          Captures mood-driven adventurousness. "Exhausted" → familiar, reliable food. "Celebratory" → format_preference spikes to fine dining. This is the occasion modifier that research (Chua et al., 2020) shows reorganises every other preference.</p>
+          <p><strong>Chapter 3 — What did you search?</strong><br/>
+          The search query is a clean proxy for local_engagement and adventurousness. "Hidden gem locals love" is a 9/10 on local engagement. "Something I've never tried" is a 9/10 on adventurousness. People reveal their search behaviour honestly because it feels mundane.</p>
+          <p><strong>Chapter 4 — The 45-minute wait.</strong><br/>
+          A patience/quality signal. Willingness to wait at the bar correlates with price_orientation (high-end places have waits) and format_preference (bar culture = higher-end venues). "Use this to try somewhere new" fires adventurousness again — a cross-validation of chapter 3.</p>
+          <p><strong>Chapter 5 — The specials board.</strong><br/>
+          The highest-signal chapter. One concrete food choice simultaneously probes spice_tolerance, health_orientation, adventurousness, flavor_complexity, and local_engagement. The framing ("the server points to the board, you must choose") removes social escape — there's no "I'd have whatever" option.</p>
+          <p><strong>Chapter 6 — The bill.</strong><br/>
+          Direct price ceiling calibration. $95 for two is a specific, concrete amount that anchors the response. Vague questions like "how much do you usually spend?" produce inaccurate answers; a specific scenario produces reliable ones. This is the final price_orientation refinement.</p>
+        </div>
+      </div>
+
+      <div class="accordion-item">
+        <button class="accordion-head" onclick="toggleAcc(this)">
+          <span class="accordion-title"><span class="acc-icon">🧬</span> How are food archetypes calculated?</span>
+          <span class="acc-arrow">▼</span>
+        </button>
+        <div class="accordion-body">
+          <p>After all 6 chapters, each taste dimension has a score (0–10) computed as the average of all signals that chapter choices contributed to it. The system then checks the top 2–3 dimensions and maps them to one of 7 archetypes:</p>
+          <p><strong>The Explorer</strong> — adventurousness ≥ 7 + local_engagement ≥ 6. Seeks undiscovered local gems and unfamiliar cuisines.</p>
+          <p><strong>The Connoisseur</strong> — price_orientation ≥ 7 + flavor_complexity ≥ 7. Quality over everything. Understands that a great meal is worth paying for.</p>
+          <p><strong>The Social Feaster</strong> — social_context ≥ 7. Food is a vehicle for connection. Communal tables, shared plates, long evenings.</p>
+          <p><strong>The Health Seeker</strong> — health_orientation ≥ 7. Eats with intention. Fresh, nourishing, purposeful.</p>
+          <p><strong>The Comfort Lover</strong> — adventurousness ≤ 4 + health_orientation ≤ 4. Reliable and satisfying. The classics are classics for a reason.</p>
+          <p><strong>The Value Hunter</strong> — price_orientation ≤ 3. Finds quality at any price point. Doesn't conflate cost with quality.</p>
+          <p><strong>The Balanced Eater</strong> — no dominant dimension. Mood, occasion, and company all factor in equally. Impossible to predict, which makes them interesting.</p>
+        </div>
+      </div>
+
+      <div class="accordion-item">
+        <button class="accordion-head" onclick="toggleAcc(this)">
+          <span class="accordion-title"><span class="acc-icon">🔬</span> Academic research behind this</span>
+          <span class="acc-arrow">▼</span>
+        </button>
+        <div class="accordion-body">
+          <div class="cite-item">
+            <div class="cite-title">Scenario-Based Preference Elicitation / Stated Preference Methods</div>
+            <div class="cite-meta">Louviere, Hensher &amp; Swait (2000) — Stated Choice Methods. Cambridge University Press. Establishes that scenario-based choice tasks produce more reliable preference data than direct rating or ranking.</div>
+          </div>
+          <div class="cite-item">
+            <div class="cite-title">System 1 / System 2 Thinking</div>
+            <div class="cite-meta">Kahneman (2011) — Thinking, Fast and Slow. Story-mode decisions engage System 1, which accesses genuine preference without the self-editing of analytical System 2 thought.</div>
+          </div>
+          <div class="cite-item">
+            <div class="cite-title">Customer Restaurant Choice: An Empirical Analysis</div>
+            <div class="cite-meta">Chua et al. (2020), PMC7503372 — food quality (25.2%), price (16.4%), service (15%), atmosphere (13.1%). Chapter 2 (mood) directly encodes the occasion modifier this paper identifies as the master variable.</div>
+          </div>
+          <div class="cite-item">
+            <div class="cite-title">Food Neophobia Scale</div>
+            <div class="cite-meta">Pliner &amp; Hobden (1992) — Chapter 3 (search query) and Chapter 5 (specials) are scenario-based proxies for the trait-level food neophobia this instrument measures.</div>
+          </div>
+          <div class="cite-item">
+            <div class="cite-title">Social Desirability Bias in Self-Report Surveys</div>
+            <div class="cite-meta">Tourangeau &amp; Yan (2007), Psychological Bulletin — Direct food preference questions are subject to strong presentation effects. Embedding identical questions in narrative scenarios suppresses this bias significantly.</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="accordion-item">
+        <button class="accordion-head" onclick="toggleAcc(this)">
+          <span class="accordion-title"><span class="acc-icon">🆚</span> How does this compare to V1 and V2?</span>
+          <span class="acc-arrow">▼</span>
+        </button>
+        <div class="accordion-body">
+          <p><strong>V1 — Tasting Table:</strong> Absolute ratings. Three-state reactions capture nuance (want / not tonight / never). Best for users who want to deliberate and reflect. Produces balanced, nuanced profiles.</p>
+          <p><strong>V2 — The Duel:</strong> Pairwise forced choice. Eliminates response bias via relative comparison. Fastest method. Produces decisive, polarised profiles with less nuance.</p>
+          <p><strong>V3 — The Evening:</strong> Scenario-based narrative. Bypasses social desirability bias by embedding preference questions in realistic life situations. Slowest method but highest ecological validity — the choices most closely reflect what users would actually do in real life. Produces the richest contextual profiles.</p>
+          <p>The ideal system combines all three: V3 for initial profiling (highest accuracy), V1 for ongoing refinement (nuance), V2 for quick recalibration (speed). Each instrument captures something the others miss.</p>
+        </div>
+      </div>
+
+    </div>
+
+    <div style="display:flex;gap:10px;flex-wrap:wrap;">
+      <button class="btn btn-primary" onclick="goScreen('results')" style="font-size:12px;padding:12px 24px;">← Back to Results</button>
+      <a class="btn btn-outline" href="/selector.html" style="font-size:12px;padding:12px 24px;">← All Versions</a>
+    </div>
+    <div style="height:48px;"></div>
+  </div>
+</div>
+
+<!-- ─── NARRATIVE BRIDGE OVERLAY ─── -->
+<div id="narrativeBridge">
+  <div class="bridge-eyebrow">You chose</div>
+  <div class="bridge-text" id="bridgeText">A solo evening.</div>
+  <div class="bridge-rule"></div>
+</div>
+
+
+<!-- ════════════════════════════════════════════
+     JAVASCRIPT ENGINE
+════════════════════════════════════════════ -->
+<script>
+
+/* ─── STORY DATA ─── */
+/*
+  Each chapter has:
+    scene:    emoji + time label
+    heading:  big story text (use \n for line break)
+    question: the prompt in accent colour
+    choices:  array of { icon, text, note (bridge text), signals }
+    fourCol:  true if 4 choices → 2×2 grid on desktop
+*/
+const CHAPTERS = [
+  {
+    scene: '🌆', time: 'Friday, 6:30 PM',
+    heading: 'Work is done.\nThe evening is yours.',
+    question: 'Who\'s joining you tonight?',
+    fourCol: true,
+    choices: [
+      { icon:'🧍', text:'Just me — solo night out',
+        note:'A solo evening.\nThe city is yours.',
+        signals:{ social_context:1, format_preference:6, adventurousness:7, price_orientation:6 } },
+      { icon:'💑', text:'My partner — date night',
+        note:'Date night.\nMake it count.',
+        signals:{ social_context:2, format_preference:7, price_orientation:7, adventurousness:5 } },
+      { icon:'👥', text:'Group of friends',
+        note:'The whole crew.\nEnergy incoming.',
+        signals:{ social_context:9, format_preference:3, price_orientation:4, adventurousness:5 } },
+      { icon:'👨‍👩‍👧', text:'Family — everyone\'s coming',
+        note:'Everyone\'s here.\nFind somewhere for all.',
+        signals:{ social_context:7, format_preference:4, price_orientation:4, adventurousness:3 } },
+    ]
+  },
+  {
+    scene: '🌙', time: 'The vibe check',
+    heading: 'Before you decide\nanything at all—',
+    question: 'How are you feeling right now?',
+    fourCol: true,
+    choices: [
+      { icon:'😮‍💨', text:'Tired. I need something easy and really good.',
+        note:'You\'ve earned\nsomething good.',
+        signals:{ adventurousness:3, format_preference:6, health_orientation:5, price_orientation:6 } },
+      { icon:'⚡', text:'Energised. Let\'s go somewhere interesting.',
+        note:'Tonight\nwe explore.',
+        signals:{ adventurousness:8, flavor_complexity:7, local_engagement:6, price_orientation:5 } },
+      { icon:'🤤', text:'Famished. Fast and delicious — that\'s it.',
+        note:'No time\nto waste.',
+        signals:{ adventurousness:4, format_preference:2, price_orientation:3, health_orientation:4 } },
+      { icon:'🥂', text:'Celebratory. Tonight is a special one.',
+        note:'Make it\na night to remember.',
+        signals:{ price_orientation:9, format_preference:8, flavor_complexity:7, adventurousness:6 } },
+    ]
+  },
+  {
+    scene: '📱', time: 'The search',
+    heading: 'You open your\nphone.',
+    question: 'What do you type?',
+    fourCol: true,
+    choices: [
+      { icon:'🗺️', text:'"Hidden gem locals actually go to"',
+        note:'Off the beaten path.\nSmart.',
+        signals:{ local_engagement:9, adventurousness:7, price_orientation:5 } },
+      { icon:'⭐', text:'"Best rated restaurant near me"',
+        note:'Let the ratings\npoint the way.',
+        signals:{ local_engagement:4, adventurousness:4, price_orientation:6, format_preference:5 } },
+      { icon:'💸', text:'"Good cheap eats tonight"',
+        note:'Value\nover everything.',
+        signals:{ price_orientation:1, local_engagement:5, adventurousness:5 } },
+      { icon:'🌍', text:'"Cuisine I\'ve never tried before"',
+        note:'Blank map.\nLet\'s discover.',
+        signals:{ adventurousness:9, flavor_complexity:8, local_engagement:6, spice_tolerance:6 } },
+    ]
+  },
+  {
+    scene: '⏱️', time: 'The plot twist',
+    heading: 'Your first choice\nhas a 45-minute wait.',
+    question: 'What do you do?',
+    fourCol: false,
+    choices: [
+      { icon:'🍸', text:'Worth it — we\'ll grab a drink at the bar.',
+        note:'The good ones\nare worth waiting for.',
+        signals:{ price_orientation:8, format_preference:7, adventurousness:5 } },
+      { icon:'🚶', text:'Nope. Let\'s find somewhere with no wait.',
+        note:'Your time\nmatters too.',
+        signals:{ price_orientation:4, format_preference:3, adventurousness:4 } },
+      { icon:'🎲', text:'Actually — let\'s use this to try somewhere new.',
+        note:'Every obstacle\nis a new door.',
+        signals:{ adventurousness:8, local_engagement:7, price_orientation:5 } },
+    ]
+  },
+  {
+    scene: '🍽️', time: 'The specials board',
+    heading: 'You sit down.\nThe server points\nto the board.',
+    question: 'Three options. One choice.',
+    fourCol: false,
+    choices: [
+      { icon:'🍛', text:'Slow-cooked lamb curry, house flatbread',
+        note:'Bold choice.\nGood one.',
+        signals:{ spice_tolerance:8, adventurousness:8, flavor_complexity:9, health_orientation:4, price_orientation:5, local_engagement:7 } },
+      { icon:'🐠', text:'Seared ahi, mango salsa, island greens',
+        note:'Clean\nand local.',
+        signals:{ health_orientation:9, local_engagement:9, spice_tolerance:2, adventurousness:5, flavor_complexity:6, price_orientation:6 } },
+      { icon:'🍖', text:'Braised short rib, truffle butter, crispy shallots',
+        note:'You\'re not\nholding back tonight.',
+        signals:{ health_orientation:2, flavor_complexity:8, price_orientation:8, adventurousness:5, spice_tolerance:3, local_engagement:4 } },
+      { icon:'🍕', text:'Wood-fired margherita, buffalo mozzarella',
+        note:'A classic\nfor a reason.',
+        signals:{ adventurousness:2, spice_tolerance:2, health_orientation:3, flavor_complexity:4, price_orientation:4, local_engagement:2 } },
+    ]
+  },
+  {
+    scene: '🧾', time: 'The bill arrives',
+    heading: '$95 for two.\nThe moment\nof truth.',
+    question: 'How do you feel about it?',
+    fourCol: true,
+    choices: [
+      { icon:'💫', text:'Worth every cent. Back again next week.',
+        note:'You know what\nyou\'re worth.',
+        signals:{ price_orientation:10 } },
+      { icon:'👍', text:'Great meal. A touch pricey, but fair.',
+        note:'Value\nwas there.',
+        signals:{ price_orientation:7 } },
+      { icon:'⚖️', text:'That\'s about my ceiling for dinner out.',
+        note:'Honest.',
+        signals:{ price_orientation:5 } },
+      { icon:'💰', text:'I\'d usually spend half that.',
+        note:'Budget-conscious\nand proud.',
+        signals:{ price_orientation:2 } },
+    ]
+  },
+];
+
+/* ─── CONSTRAINT DATA ─── */
+const DIETARY_OPTIONS = [
+  { id:'none',        label:'No Restrictions', emoji:'✅' },
+  { id:'vegetarian',  label:'Vegetarian',       emoji:'🥦' },
+  { id:'vegan',       label:'Vegan',            emoji:'🌱' },
+  { id:'gluten_free', label:'Gluten-Free',      emoji:'🌾' },
+  { id:'halal',       label:'Halal',            emoji:'☪️'  },
+  { id:'kosher',      label:'Kosher',           emoji:'✡️'  },
+  { id:'shellfish',   label:'No Shellfish',     emoji:'🦞' },
+  { id:'dairy_free',  label:'Dairy-Free',       emoji:'🥛' },
+  { id:'nut_allergy', label:'Nut Allergy',      emoji:'🥜' },
+];
+const ISLAND_OPTIONS = [
+  { id:'oahu',       label:"O'ahu",     emoji:'🌺' },
+  { id:'maui',       label:'Maui',      emoji:'🌊' },
+  { id:'big_island', label:'Big Island',emoji:'🌋' },
+  { id:'kauai',      label:"Kaua'i",    emoji:'🌿' },
+  { id:'molokai',    label:"Moloka'i",  emoji:'🐠' },
+  { id:'lanai',      label:"Lāna'i",    emoji:'🦋' },
+];
+const BUDGET_PRICE = { budget:1, moderate:2, upscale:3, luxury:4 };
+const DIM_LABELS = {
+  adventurousness:    'Adventurousness',
+  spice_tolerance:    'Spice Tolerance',
+  health_orientation: 'Health Focus',
+  flavor_complexity:  'Flavor Complexity',
+  price_orientation:  'Price Willingness',
+  social_context:     'Social Energy',
+  local_engagement:   'Local Engagement',
+  format_preference:  'Dining Format',
+};
+const DIMS = Object.keys(DIM_LABELS);
+
+/* ─── ARCHETYPES ─── */
+const ARCHETYPES = [
+  {
+    name: 'The Explorer',
+    icon: '🧭',
+    condition: s => s.adventurousness >= 7 && s.local_engagement >= 6,
+    desc: 'You seek the undiscovered. Hidden gems, bold flavours, unfamiliar menus — you eat to experience, not just to be fed. The best recommendation Ka\'ana can make for you starts with "you probably haven\'t heard of this place."'
+  },
+  {
+    name: 'The Connoisseur',
+    icon: '🍷',
+    condition: s => s.price_orientation >= 7 && s.flavor_complexity >= 7,
+    desc: 'Quality is non-negotiable for you. You understand that a great meal is worth paying for, and you have the palate to appreciate every layer of complexity. You don\'t splurge recklessly — you invest deliberately.'
+  },
+  {
+    name: 'The Social Feaster',
+    icon: '🥂',
+    condition: s => s.social_context >= 7,
+    desc: 'Food is better when shared. You live for communal tables, passed plates, and meals that turn into three-hour conversations. The restaurant matters less than who\'s at the table — but the right restaurant makes it perfect.'
+  },
+  {
+    name: 'The Health Seeker',
+    icon: '🌿',
+    condition: s => s.health_orientation >= 7,
+    desc: 'You eat with intention. Fresh, clean, nourishing — food should make you feel as good as it tastes. Hawaii is one of the best places in the world to eat this way, and we know exactly where to send you.'
+  },
+  {
+    name: 'The Comfort Lover',
+    icon: '🛋️',
+    condition: s => s.adventurousness <= 4 && s.health_orientation <= 4,
+    desc: 'Reliable and deeply satisfying. The classics exist because they work, and you know exactly what makes you happy. There\'s no shame in that — the best version of familiar is still extraordinary.'
+  },
+  {
+    name: 'The Value Hunter',
+    icon: '💡',
+    condition: s => s.price_orientation <= 3,
+    desc: 'The best meal isn\'t the most expensive one. You know how to find genuine quality at any price point, and you\'re skeptical of anything that costs more than it needs to. Hawaii has incredible food at every level.'
+  },
+];
+const DEFAULT_ARCHETYPE = {
+  name: 'The Balanced Eater', icon: '⚖️',
+  desc: 'You have no fixed rules. Mood, occasion, company — everything factors in. You\'re impossible to predict, which makes you genuinely interesting to feed. Ka\'ana will keep you on your toes.'
+};
+
+/* ─── STATE ─── */
+const dimSums   = Object.fromEntries(DIMS.map(d => [d, { sum: 0, count: 0 }]));
+const storyLog  = []; // { chapter, choiceText }
+let currentChapter = 0;
+let picking = false;
+
+const state = {
+  dietary: new Set(),
+  island: null,
+  budget: 'moderate',
+  tasteScores: {},
+  archetype: null,
+};
+
+/* ─── SCREEN NAV ─── */
+function goScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => {
+    s.classList.remove('active');
+  });
+  const el = document.getElementById('screen-' + id);
+  el.classList.add('active');
+  if (el.classList.contains('scroll')) el.scrollTop = 0;
+  window.scrollTo(0, 0);
+}
+
+/* ─── UPDATE CHAPTER PROGRESS ─── */
+function updateProgress(current) {
+  for (let i = 0; i < 6; i++) {
+    const seg = document.getElementById('seg-' + i);
+    if (!seg) continue;
+    seg.className = 'ch-seg' + (i < current ? ' done' : i === current ? ' active' : '');
+  }
+}
+
+/* ─── RENDER CHAPTER ─── */
+function renderChapter(index) {
+  const ch = CHAPTERS[index];
+
+  // Update progress
+  updateProgress(index);
+
+  // Update story text (without transition — called after fade-out)
+  document.getElementById('sceneEmoji').textContent   = ch.scene;
+  document.getElementById('sceneTime').textContent    = ch.time;
+  document.getElementById('storyHeading').innerHTML   = ch.heading.replace(/\n/g, '<br/>');
+  document.getElementById('storyQuestion').textContent = ch.question;
+
+  // Render choice cards
+  const area = document.getElementById('choicesArea');
+  area.innerHTML = '';
+  area.className = 'choices-area' + (ch.fourCol ? ' two-col' : '');
+
+  ch.choices.forEach((choice, i) => {
+    const card = document.createElement('button');
+    card.className = 'choice-card';
+    card.style.animationDelay = (i * 0.06) + 's';
+    card.innerHTML = `<span class="choice-icon">${choice.icon}</span><span class="choice-text">${choice.text}</span>`;
+    card.addEventListener('click', () => { if (!picking) selectChoice(choice, card); });
+    area.appendChild(card);
+  });
+
+  // Fade back in
+  const storyArea = document.getElementById('storyArea');
+  storyArea.style.opacity = '1';
+  area.style.opacity = '1';
+}
+
+/* ─── SELECT A CHOICE ─── */
+async function selectChoice(choice, cardEl) {
+  picking = true;
+
+  // Record signals
+  Object.entries(choice.signals).forEach(([dim, val]) => {
+    if (dimSums[dim]) {
+      dimSums[dim].sum += val;
+      dimSums[dim].count++;
+    }
+  });
+  storyLog.push({ chapter: currentChapter, text: choice.text });
+
+  // Flash selected state
+  cardEl.classList.add('selected');
+  await sleep(280);
+
+  // Fade out story + choices
+  const storyArea = document.getElementById('storyArea');
+  const choicesArea = document.getElementById('choicesArea');
+  storyArea.style.opacity = '0';
+  choicesArea.style.opacity = '0';
+  await sleep(380);
+
+  // Show narrative bridge
+  const bridge = document.getElementById('narrativeBridge');
+  const bridgeText = document.getElementById('bridgeText');
+  bridgeText.innerHTML = choice.note.replace(/\n/g, '<br/>');
+  bridge.classList.add('show');
+  await sleep(1100);
+  bridge.classList.remove('show');
+  await sleep(350);
+
+  // Advance
+  currentChapter++;
+
+  if (currentChapter >= CHAPTERS.length) {
+    // Mark last segment done
+    document.getElementById('seg-5').className = 'ch-seg done';
+    goScreen('dietary');
+  } else {
+    renderChapter(currentChapter);
+  }
+  picking = false;
+}
+
+/* ─── START STORY ─── */
+function startStory() {
+  currentChapter = 0;
+  DIMS.forEach(d => { dimSums[d] = { sum: 0, count: 0 }; });
+  storyLog.length = 0;
+  renderChapter(0);
+  goScreen('story');
+}
+
+/* ─── DIETARY GRID ─── */
+function buildDietaryGrid() {
+  const grid = document.getElementById('dietaryGrid');
+  DIETARY_OPTIONS.forEach(opt => {
+    const tile = document.createElement('button');
+    tile.className = 'constraint-tile';
+    tile.dataset.id = opt.id;
+    tile.innerHTML = `<span class="tile-emoji">${opt.emoji}</span><span class="tile-label">${opt.label}</span>`;
+    tile.addEventListener('click', () => toggleDietary(opt.id, tile));
+    grid.appendChild(tile);
+  });
+}
+function toggleDietary(id, tile) {
+  if (id === 'none') {
+    state.dietary.clear();
+    state.dietary.add('none');
+    document.querySelectorAll('#dietaryGrid .constraint-tile').forEach(t =>
+      t.classList.toggle('selected', t.dataset.id === 'none'));
+    return;
+  }
+  state.dietary.delete('none');
+  document.querySelector('#dietaryGrid [data-id="none"]')?.classList.remove('selected');
+  if (state.dietary.has(id)) { state.dietary.delete(id); tile.classList.remove('selected'); }
+  else { state.dietary.add(id); tile.classList.add('selected'); }
+  if (state.dietary.size === 0) {
+    state.dietary.add('none');
+    document.querySelector('#dietaryGrid [data-id="none"]')?.classList.add('selected');
+  }
+}
+
+/* ─── ISLAND GRID ─── */
+function buildIslandGrid() {
+  const grid = document.getElementById('islandGrid');
+  ISLAND_OPTIONS.forEach(opt => {
+    const tile = document.createElement('button');
+    tile.className = 'constraint-tile';
+    tile.dataset.id = opt.id;
+    tile.innerHTML = `<span class="tile-emoji">${opt.emoji}</span><span class="tile-label">${opt.label}</span>`;
+    tile.addEventListener('click', () => {
+      state.island = opt.id;
+      document.querySelectorAll('#islandGrid .constraint-tile').forEach(t =>
+        t.classList.toggle('selected', t.dataset.id === opt.id));
+      const btn = document.getElementById('islandNextBtn');
+      btn.disabled = false;
+      btn.style.opacity = '1';
+      btn.style.cursor = 'pointer';
+    });
+    grid.appendChild(tile);
+  });
+}
+
+/* ─── SCORING ─── */
+function computeScores() {
+  const scores = {};
+  DIMS.forEach(dim => {
+    const { sum, count } = dimSums[dim];
+    scores[dim] = count > 0 ? parseFloat((sum / count).toFixed(2)) : 5;
+  });
+  return scores;
+}
+
+function getArchetype(scores) {
+  for (const a of ARCHETYPES) {
+    if (a.condition(scores)) return a;
+  }
+  return DEFAULT_ARCHETYPE;
+}
+
+function buildPayload(scores) {
+  let cuisine = 'Any';
+  if (scores.adventurousness >= 7) cuisine = 'International';
+  else if (scores.local_engagement >= 7) cuisine = 'Hawaiian';
+  else if (scores.adventurousness >= 5) cuisine = 'Asian';
+  else cuisine = 'American';
+
+  let atmosphere = 'casual';
+  if (scores.format_preference >= 8) atmosphere = 'fine dining';
+  else if (scores.social_context >= 7) atmosphere = 'lively';
+  else if (scores.format_preference >= 6) atmosphere = 'upscale casual';
+
+  return {
+    dietary: [...state.dietary].filter(d => d !== 'none'),
+    occasion: scores.social_context >= 6 ? 'friends_group'
+            : scores.format_preference >= 7 ? 'romantic_date'
+            : 'solo_explorer',
+    cuisine,
+    atmosphere,
+    budget: BUDGET_PRICE[state.budget] || 2,
+    noise_pref: Math.round(1 + (scores.social_context / 10) * 3),
+    island: state.island || 'oahu',
+    current_time: new Date().getHours(),
+    taste_dimensions: scores,
+  };
+}
+
+/* ─── PROCESSING + API ─── */
+async function buildTasteID() {
+  if (!state.island) return;
+  goScreen('processing');
+
+  const scores    = computeScores();
+  const archetype = getArchetype(scores);
+  state.tasteScores = scores;
+  state.archetype   = archetype;
+
+  const payload = buildPayload(scores);
+
+  const steps = ['pstep-1','pstep-2','pstep-3','pstep-4','pstep-5'];
+  for (let i = 0; i < steps.length - 1; i++) {
+    document.getElementById(steps[i]).classList.add('active');
+    await sleep(420);
+    document.getElementById(steps[i]).classList.remove('active');
+    document.getElementById(steps[i]).classList.add('done');
+  }
+  document.getElementById(steps[4]).classList.add('active');
+
+  let results = [];
+  let error   = null;
+  try {
+    const res = await fetch('http://localhost:8001/recommend', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+    if (!res.ok) throw new Error(`Server returned ${res.status}`);
+    const data = await res.json();
+    results = data.recommendations || [];
+  } catch (e) {
+    error = e.message;
+  }
+
+  document.getElementById(steps[4]).classList.remove('active');
+  document.getElementById(steps[4]).classList.add('done');
+  await sleep(350);
+
+  renderResults(scores, archetype, results, error);
+  goScreen('results');
+}
+
+/* ─── RENDER RESULTS ─── */
+function renderResults(scores, archetype, results, error) {
+  // Archetype card
+  document.getElementById('archetypeName').textContent =
+    archetype.icon + '  ' + archetype.name;
+  document.getElementById('archetypeDesc').textContent = archetype.desc;
+
+  // Dimension bars
+  const dims = document.getElementById('tasteDims');
+  dims.innerHTML = '';
+  Object.entries(DIM_LABELS).forEach(([key, label]) => {
+    const val = scores[key] ?? 5;
+    const pct = (val / 10 * 100).toFixed(0);
+    dims.innerHTML += `
+      <div class="dim-row">
+        <div class="dim-label">
+          <span>${label}</span><span class="dim-score">${val.toFixed(1)}</span>
+        </div>
+        <div class="dim-track"><div class="dim-fill" style="width:${pct}%"></div></div>
+      </div>`;
+  });
+
+  // Restaurant list
+  const list = document.getElementById('resultsList');
+  list.innerHTML = '';
+
+  if (error) {
+    list.innerHTML = `
+      <div class="error-box">
+        <p><strong>Couldn't reach the restaurant server.</strong> Make sure the Ka'ana backend is running on port 8001.</p>
+        <p style="margin-top:8px;font-size:12px;opacity:0.7;">Error: ${error}</p>
+      </div>`;
+    return;
+  }
+  if (!results.length) {
+    list.innerHTML = `<p style="font-size:13px;color:var(--muted);">No restaurants matched your filters. Try adjusting island or budget.</p>`;
+    return;
+  }
+
+  results.slice(0, 10).forEach((r, i) => {
+    const card = document.createElement('div');
+    card.className = 'result-card';
+    const score = ((r.score || 0) * 100).toFixed(0);
+    const tags  = [r.cuisine, r.atmosphere, r.island].filter(Boolean);
+    card.innerHTML = `
+      <div class="result-inner">
+        <div class="result-rank ${i===0?'top1':''}">${i===0?'★':i+1}</div>
+        <div class="result-body">
+          <div class="result-name">${r.name || 'Unknown'}</div>
+          <div class="result-meta">${r.location||r.island||''} ${r.price_range?'· '+'$'.repeat(r.price_range):''}</div>
+          <div class="result-tags">${tags.map(t=>`<span class="result-tag">${t}</span>`).join('')}</div>
+        </div>
+        <div class="result-score"><div class="score-pill">${score}%</div></div>
+      </div>`;
+    list.appendChild(card);
+  });
+}
+
+/* ─── ACCORDION ─── */
+function toggleAcc(head) {
+  const body   = head.nextElementSibling;
+  const isOpen = body.classList.contains('open');
+  document.querySelectorAll('.accordion-body').forEach(b => b.classList.remove('open'));
+  document.querySelectorAll('.accordion-head').forEach(h => h.classList.remove('open'));
+  if (!isOpen) { body.classList.add('open'); head.classList.add('open'); }
+}
+
+/* ─── UTILS ─── */
+function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+/* ─── INIT ─── */
+buildDietaryGrid();
+buildIslandGrid();
+
+</script>
+</body>
+</html>

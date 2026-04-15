@@ -1,0 +1,598 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Ka'ana — Taste Intelligence</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;600;700;900&display=swap" rel="stylesheet">
+<style>
+/* ── Reset ──────────────────────────────────────────────────────────── */
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:       #ede8de;
+  --surface:  #ffffff;
+  --accent:   #b8705a;
+  --accent-dk:#9a5c48;
+  --text:     #1a1510;
+  --muted:    #6b5f52;
+  --border:   #1a1510;
+  --green:    #3a8c68;
+  --blue:     #3a6b9c;
+  --red:      #b84040;
+  --shadow:   4px 4px 0 #1a1510;
+  --shadow-sm:2px 2px 0 #1a1510;
+}
+body{
+  font-family:'DM Sans',-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  background:var(--bg);color:var(--text);min-height:100vh;
+}
+
+/* ── Header ─────────────────────────────────────────────────────────── */
+header{
+  padding:20px 32px;display:flex;align-items:center;justify-content:space-between;
+  border-bottom:2px solid var(--border);background:var(--bg);}
+.logo-text{
+  font-size:28px;font-weight:900;letter-spacing:1px;
+  text-transform:uppercase;color:var(--accent);}
+.logo-sub{
+  font-size:11px;font-weight:700;letter-spacing:2px;
+  text-transform:uppercase;color:var(--text);margin-top:2px;}
+.header-badge{
+  border:2px solid var(--border);background:var(--surface);
+  font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;
+  padding:6px 14px;box-shadow:var(--shadow-sm);}
+
+/* ── Layout ─────────────────────────────────────────────────────────── */
+.layout{display:flex;gap:0;min-height:calc(100vh - 73px)}
+.panel-left{
+  width:400px;flex-shrink:0;
+  border-right:2px solid var(--border);
+  overflow-y:auto;
+  position:sticky;top:73px;height:calc(100vh - 73px);
+  background:var(--bg);}
+.panel-right{flex:1;padding:32px;overflow-y:auto;background:var(--bg);}
+@media(max-width:960px){
+  .layout{flex-direction:column}
+  .panel-left{width:100%;position:static;height:auto}
+}
+
+/* ── Left panel inner ────────────────────────────────────────────────── */
+.left-inner{padding:24px 20px}
+.section-head{
+  font-size:11px;font-weight:900;text-transform:uppercase;letter-spacing:2px;
+  color:var(--text);margin-bottom:10px;margin-top:24px;display:flex;
+  align-items:center;gap:8px}
+.section-head:first-of-type{margin-top:0}
+.section-head .num{
+  background:var(--accent);color:#fff;
+  font-size:10px;font-weight:900;width:20px;height:20px;
+  display:flex;align-items:center;justify-content:center;flex-shrink:0;
+  border:1.5px solid var(--border);}
+
+/* ── Option cards grid ───────────────────────────────────────────────── */
+.option-grid{display:grid;gap:8px}
+.option-grid.cols-2{grid-template-columns:1fr 1fr}
+
+.opt-card input[type=radio]{display:none}
+.opt-card label{
+  display:flex;flex-direction:column;align-items:center;gap:5px;
+  padding:10px 8px;background:var(--surface);
+  border:2px solid var(--border);
+  cursor:pointer;text-align:center;
+  transition:all .1s;user-select:none;
+  box-shadow:var(--shadow-sm);}
+.opt-card label:hover{background:var(--bg);transform:translate(-1px,-1px);
+  box-shadow:3px 3px 0 var(--border);}
+.opt-card input[type=radio]:checked+label{
+  background:var(--accent);color:#fff;
+  transform:translate(2px,2px);box-shadow:none;}
+.opt-card input[type=radio]:checked+label .opt-name{color:#fff;}
+.opt-card input[type=radio]:checked+label .opt-desc{color:rgba(255,255,255,.75);}
+.opt-card .opt-icon{font-size:18px;line-height:1}
+.opt-card .opt-name{font-size:11px;font-weight:700;color:var(--text);
+  text-transform:uppercase;letter-spacing:.5px}
+.opt-card .opt-desc{font-size:10px;color:var(--muted);line-height:1.3}
+
+/* ── Sliders ─────────────────────────────────────────────────────────── */
+.slider-block{margin-top:4px}
+.slider-row{display:flex;align-items:center;gap:10px;margin:6px 0}
+input[type=range]{
+  flex:1;-webkit-appearance:none;height:4px;
+  background:var(--border);border-radius:0;outline:none;cursor:pointer}
+input[type=range]::-webkit-slider-thumb{
+  -webkit-appearance:none;width:18px;height:18px;border-radius:0;
+  background:var(--accent);cursor:pointer;border:2px solid var(--border);}
+.slider-val{
+  font-size:13px;font-weight:900;color:var(--accent);min-width:36px;
+  text-align:right;text-transform:uppercase;letter-spacing:.5px}
+.slider-labels{
+  display:flex;justify-content:space-between;
+  font-size:9px;font-weight:700;color:var(--muted);
+  margin-top:3px;text-transform:uppercase;letter-spacing:.5px}
+.time-big{
+  font-size:24px;font-weight:900;color:var(--text);
+  text-align:center;margin-top:8px;letter-spacing:1px}
+
+/* ── CTA button ──────────────────────────────────────────────────────── */
+.cta-wrap{
+  padding:20px;border-top:2px solid var(--border);
+  position:sticky;bottom:0;background:var(--bg);}
+#btn-go{
+  width:100%;padding:16px;font-size:14px;font-weight:900;
+  border:2px solid var(--border);
+  background:var(--accent);color:#fff;cursor:pointer;
+  letter-spacing:2px;text-transform:uppercase;
+  box-shadow:var(--shadow);transition:all .1s;
+  font-family:'DM Sans',sans-serif;}
+#btn-go:hover{transform:translate(-2px,-2px);box-shadow:6px 6px 0 var(--border);}
+#btn-go:active{transform:translate(2px,2px);box-shadow:none;}
+#btn-go:disabled{opacity:.4;cursor:not-allowed;transform:none;box-shadow:var(--shadow);}
+
+/* ── Right panel placeholder ─────────────────────────────────────────── */
+.placeholder{
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  min-height:60vh;gap:16px;text-align:center;color:var(--muted)}
+.placeholder .p-icon{font-size:48px;opacity:.4}
+.placeholder h3{
+  font-size:16px;font-weight:900;text-transform:uppercase;
+  letter-spacing:1px;color:var(--text)}
+.placeholder p{font-size:13px;max-width:320px;line-height:1.6;font-weight:500}
+
+/* ── Loading ─────────────────────────────────────────────────────────── */
+.loading{display:flex;flex-direction:column;align-items:center;
+  justify-content:center;min-height:50vh;gap:16px}
+.spinner{
+  width:36px;height:36px;border:3px solid var(--border);
+  border-top-color:var(--accent);animation:spin .7s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.loading p{
+  color:var(--muted);font-size:12px;font-weight:700;
+  text-transform:uppercase;letter-spacing:1px}
+
+/* ── Results header ──────────────────────────────────────────────────── */
+.results-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:24px}
+.results-top h2{
+  font-size:20px;font-weight:900;text-transform:uppercase;
+  letter-spacing:1px;color:var(--text)}
+.results-meta{
+  font-size:10px;font-weight:700;color:var(--muted);
+  text-transform:uppercase;letter-spacing:.5px}
+
+/* ── Restaurant card ─────────────────────────────────────────────────── */
+.card{
+  background:var(--surface);border:2px solid var(--border);
+  padding:20px;margin-bottom:16px;
+  box-shadow:var(--shadow);transition:all .1s;}
+.card:hover{transform:translate(-2px,-2px);box-shadow:6px 6px 0 var(--border);}
+
+.card-top{display:flex;justify-content:space-between;align-items:flex-start;gap:14px}
+.card-left{flex:1;min-width:0}
+.card-rank-name{display:flex;align-items:center;gap:10px;margin-bottom:6px}
+.card-rank{
+  font-size:10px;font-weight:900;color:#fff;background:var(--text);
+  padding:3px 8px;flex-shrink:0;letter-spacing:.5px;text-transform:uppercase;}
+.card-name{font-size:17px;font-weight:900;color:var(--text);line-height:1.2;
+  text-transform:uppercase;letter-spacing:.3px}
+.card-meta{
+  font-size:11px;font-weight:600;color:var(--muted);
+  margin-top:4px;display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.card-island{
+  font-size:10px;font-weight:900;color:var(--surface);
+  background:var(--text);padding:2px 7px;
+  letter-spacing:.5px;text-transform:uppercase;}
+
+.score-badge{
+  flex-shrink:0;text-align:center;
+  background:var(--accent);border:2px solid var(--border);
+  padding:10px 14px;box-shadow:var(--shadow-sm);}
+.score-pct{font-size:24px;font-weight:900;color:#fff;line-height:1}
+.score-label{
+  font-size:9px;color:rgba(255,255,255,.8);margin-top:2px;
+  text-transform:uppercase;letter-spacing:1px;font-weight:700}
+
+/* Score bar */
+.score-bar-section{margin:14px 0 10px}
+.bar-labels{
+  display:flex;justify-content:space-between;
+  font-size:10px;font-weight:700;color:var(--muted);
+  margin-bottom:5px;text-transform:uppercase;letter-spacing:.5px}
+.bar-track{height:8px;background:var(--bg);border:2px solid var(--border);
+  overflow:hidden;display:flex}
+.bar-cosine{background:var(--blue);height:100%;transition:width .5s}
+.bar-attr{background:var(--accent);height:100%;transition:width .5s}
+.bar-legend{display:flex;gap:14px;margin-top:6px;
+  font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.3px}
+.dot{display:inline-block;width:8px;height:8px;margin-right:4px;vertical-align:middle;
+  border:1.5px solid var(--border);}
+
+/* Tags */
+.tag-row{display:flex;flex-wrap:wrap;gap:6px;margin:10px 0}
+.tag{
+  background:var(--bg);color:var(--muted);font-size:10px;font-weight:700;
+  padding:3px 9px;border:1.5px solid var(--border);
+  text-transform:uppercase;letter-spacing:.3px}
+.tag-price{background:var(--accent);color:#fff;border-color:var(--accent-dk);font-weight:900}
+.tag-open{background:var(--green);color:#fff;border-color:#2a6b50}
+.tag-closed{background:var(--red);color:#fff;border-color:#8a3030}
+
+/* Explanation */
+.why-head{
+  font-size:10px;font-weight:900;text-transform:uppercase;letter-spacing:1.5px;
+  color:var(--text);margin:14px 0 8px;border-top:2px solid var(--border);padding-top:12px}
+.reason{
+  display:flex;align-items:flex-start;gap:8px;
+  margin-bottom:6px;font-size:13px;font-weight:500;color:var(--text)}
+.reason .check{
+  color:var(--surface);background:var(--green);font-size:10px;font-weight:900;
+  flex-shrink:0;width:18px;height:18px;display:flex;align-items:center;
+  justify-content:center;border:1.5px solid var(--border);}
+
+/* Description */
+.card-desc{
+  font-size:12px;color:var(--muted);line-height:1.7;margin-top:12px;
+  border-top:2px solid var(--bg);padding-top:10px;font-weight:500}
+
+/* ── Comparison table ────────────────────────────────────────────────── */
+.cmp-wrap{
+  background:var(--surface);border:2px solid var(--border);
+  padding:22px;margin-top:24px;box-shadow:var(--shadow);}
+.cmp-wrap h3{
+  font-size:14px;font-weight:900;text-transform:uppercase;
+  letter-spacing:1px;color:var(--text);margin-bottom:4px}
+.cmp-wrap .sub{
+  font-size:11px;font-weight:600;color:var(--muted);
+  margin-bottom:18px;text-transform:uppercase;letter-spacing:.3px}
+table.cmp{width:100%;border-collapse:collapse;font-size:12px}
+table.cmp th{
+  text-align:left;padding:8px 10px;font-size:10px;font-weight:900;
+  text-transform:uppercase;letter-spacing:.5px;color:var(--muted);
+  border-bottom:2px solid var(--border)}
+table.cmp td{
+  padding:10px;border-bottom:1px solid var(--bg);vertical-align:middle;font-weight:600}
+table.cmp tr:last-child td{border-bottom:none}
+.dim-label{color:var(--text);font-weight:700;font-size:10px;text-transform:uppercase;letter-spacing:.3px}
+.mini-track{background:var(--bg);border:1.5px solid var(--border);height:6px;width:80px;overflow:hidden}
+.mini-fill{height:100%;transition:width .4s}
+.pct-text{font-size:10px;font-weight:700;color:var(--muted);margin-top:2px}
+
+/* ── Error ───────────────────────────────────────────────────────────── */
+.err-box{
+  background:var(--surface);border:2px solid var(--red);
+  padding:16px;color:var(--red);font-size:13px;font-weight:700;
+  text-transform:uppercase;letter-spacing:.5px;box-shadow:var(--shadow-sm);}
+
+/* ── Divider ─────────────────────────────────────────────────────────── */
+hr.divider{border:none;border-top:2px solid var(--border);margin:20px 0}
+</style>
+</head>
+<body>
+
+<header>
+  <div>
+    <div class="logo-text">Ka'ana</div>
+    <div class="logo-sub">Taste Intelligence &middot; Hawaii</div>
+  </div>
+  <div class="header-badge">70 Restaurants &middot; 4 Islands</div>
+</header>
+
+<div class="layout">
+
+  <!-- ══ LEFT PANEL ══════════════════════════════════════════════════ -->
+  <div class="panel-left">
+    <div class="left-inner">
+
+      <!-- 1. Dietary -->
+      <div class="section-head">
+        <span class="num">1</span>Dietary
+      </div>
+      <div class="option-grid cols-2">
+        <div class="opt-card"><input type="radio" name="dietary" id="d1" value="no_restrictions" checked>
+          <label for="d1"><span class="opt-icon">🍽</span><span class="opt-name">No restrictions</span></label></div>
+        <div class="opt-card"><input type="radio" name="dietary" id="d2" value="vegetarian">
+          <label for="d2"><span class="opt-icon">🥗</span><span class="opt-name">Vegetarian</span></label></div>
+        <div class="opt-card"><input type="radio" name="dietary" id="d3" value="vegan">
+          <label for="d3"><span class="opt-icon">🌱</span><span class="opt-name">Vegan</span></label></div>
+        <div class="opt-card"><input type="radio" name="dietary" id="d4" value="pescatarian">
+          <label for="d4"><span class="opt-icon">🐟</span><span class="opt-name">Pescatarian</span></label></div>
+      </div>
+
+      <!-- 2. Occasion -->
+      <div class="section-head">
+        <span class="num">2</span>Occasion
+      </div>
+      <div class="option-grid cols-2">
+        <div class="opt-card"><input type="radio" name="occasion" id="oc1" value="romantic_date" checked>
+          <label for="oc1"><span class="opt-icon">🕯</span><span class="opt-name">Date night</span></label></div>
+        <div class="opt-card"><input type="radio" name="occasion" id="oc2" value="friends_group">
+          <label for="oc2"><span class="opt-icon">🥂</span><span class="opt-name">Friends group</span></label></div>
+        <div class="opt-card"><input type="radio" name="occasion" id="oc3" value="family_kids">
+          <label for="oc3"><span class="opt-icon">👨‍👩‍👧</span><span class="opt-name">Family &amp; kids</span></label></div>
+        <div class="opt-card"><input type="radio" name="occasion" id="oc4" value="solo_explorer">
+          <label for="oc4"><span class="opt-icon">🎧</span><span class="opt-name">Solo explorer</span></label></div>
+        <div class="opt-card"><input type="radio" name="occasion" id="oc5" value="special_occasion">
+          <label for="oc5"><span class="opt-icon">🎉</span><span class="opt-name">Special occasion</span></label></div>
+        <div class="opt-card"><input type="radio" name="occasion" id="oc6" value="adventurous">
+          <label for="oc6"><span class="opt-icon">🗺</span><span class="opt-name">Adventure eating</span></label></div>
+      </div>
+
+      <!-- 3. Cuisine -->
+      <div class="section-head">
+        <span class="num">3</span>Cuisine
+      </div>
+      <div class="option-grid cols-2">
+        <div class="opt-card"><input type="radio" name="cuisine" id="cu1" value="local_hawaiian" checked>
+          <label for="cu1"><span class="opt-icon">🤙</span><span class="opt-name">Local Hawaiian</span><span class="opt-desc">Plate lunch, poke, luau</span></label></div>
+        <div class="opt-card"><input type="radio" name="cuisine" id="cu2" value="japanese_pacific">
+          <label for="cu2"><span class="opt-icon">🍣</span><span class="opt-name">Japanese &amp; Pacific</span><span class="opt-desc">Sushi, poke, ramen</span></label></div>
+        <div class="opt-card"><input type="radio" name="cuisine" id="cu3" value="modern_fusion">
+          <label for="cu3"><span class="opt-icon">✨</span><span class="opt-name">Modern fusion</span><span class="opt-desc">Creative chef-driven</span></label></div>
+        <div class="opt-card"><input type="radio" name="cuisine" id="cu4" value="comfort_casual">
+          <label for="cu4"><span class="opt-icon">🍔</span><span class="opt-name">Comfort &amp; casual</span><span class="opt-desc">Burgers, pizza, tacos</span></label></div>
+        <div class="opt-card"><input type="radio" name="cuisine" id="cu5" value="healthy_light">
+          <label for="cu5"><span class="opt-icon">🥤</span><span class="opt-name">Healthy &amp; light</span><span class="opt-desc">Bowls, acai, clean</span></label></div>
+        <div class="opt-card"><input type="radio" name="cuisine" id="cu6" value="world_cuisine">
+          <label for="cu6"><span class="opt-icon">🌍</span><span class="opt-name">World cuisine</span><span class="opt-desc">Thai, Indian, Italian</span></label></div>
+      </div>
+
+      <!-- 4. Atmosphere -->
+      <div class="section-head">
+        <span class="num">4</span>Atmosphere
+      </div>
+      <div class="option-grid cols-2">
+        <div class="opt-card"><input type="radio" name="atmosphere" id="at1" value="beach_outdoor" checked>
+          <label for="at1"><span class="opt-icon">🏖</span><span class="opt-name">Beach &amp; outdoor</span></label></div>
+        <div class="opt-card"><input type="radio" name="atmosphere" id="at2" value="upscale_elegant">
+          <label for="at2"><span class="opt-icon">🍾</span><span class="opt-name">Upscale &amp; elegant</span></label></div>
+        <div class="opt-card"><input type="radio" name="atmosphere" id="at3" value="lively_social">
+          <label for="at3"><span class="opt-icon">🎶</span><span class="opt-name">Lively &amp; social</span></label></div>
+        <div class="opt-card"><input type="radio" name="atmosphere" id="at4" value="cozy_local">
+          <label for="at4"><span class="opt-icon">🏡</span><span class="opt-name">Cozy &amp; local</span></label></div>
+        <div class="opt-card"><input type="radio" name="atmosphere" id="at5" value="scenic_unique">
+          <label for="at5"><span class="opt-icon">🌄</span><span class="opt-name">Scenic &amp; unique</span></label></div>
+      </div>
+
+      <!-- 5. Island -->
+      <div class="section-head">
+        <span class="num">5</span>Island
+      </div>
+      <div class="option-grid cols-2">
+        <div class="opt-card"><input type="radio" name="island" id="is0" value="any" checked>
+          <label for="is0"><span class="opt-icon">🗺</span><span class="opt-name">All islands</span></label></div>
+        <div class="opt-card"><input type="radio" name="island" id="is1" value="oahu">
+          <label for="is1"><span class="opt-icon">🌆</span><span class="opt-name">Oahu</span></label></div>
+        <div class="opt-card"><input type="radio" name="island" id="is2" value="maui">
+          <label for="is2"><span class="opt-icon">🌊</span><span class="opt-name">Maui</span></label></div>
+        <div class="opt-card"><input type="radio" name="island" id="is3" value="big_island">
+          <label for="is3"><span class="opt-icon">🌋</span><span class="opt-name">Big Island</span></label></div>
+        <div class="opt-card"><input type="radio" name="island" id="is4" value="kauai">
+          <label for="is4"><span class="opt-icon">🌿</span><span class="opt-name">Kauai</span></label></div>
+      </div>
+
+      <hr class="divider">
+
+      <!-- Budget -->
+      <div class="section-head" style="margin-top:0">Budget</div>
+      <div class="slider-block">
+        <div class="slider-row">
+          <input type="range" id="budget" min="1" max="4" value="2" step="1">
+          <span class="slider-val" id="budget-val">$$</span>
+        </div>
+        <div class="slider-labels"><span>$</span><span>$$</span><span>$$$</span><span>$$$$</span></div>
+      </div>
+
+      <!-- Noise -->
+      <div class="section-head">Vibe level</div>
+      <div class="slider-block">
+        <div class="slider-row">
+          <input type="range" id="noise_pref" min="1" max="4" value="2" step="1">
+          <span class="slider-val" id="noise-val">LOW</span>
+        </div>
+        <div class="slider-labels"><span>Quiet</span><span>Relaxed</span><span>Lively</span><span>Loud</span></div>
+      </div>
+
+      <!-- Time -->
+      <div class="section-head">Current time</div>
+      <div class="slider-block">
+        <div class="slider-row">
+          <input type="range" id="current_time" min="0" max="23" value="12" step="1">
+        </div>
+        <div class="time-big" id="time-display">12:00 PM</div>
+      </div>
+
+    </div><!-- /left-inner -->
+
+    <div class="cta-wrap">
+      <button id="btn-go" onclick="getRecommendations()">
+        Find my restaurants
+      </button>
+    </div>
+  </div><!-- /panel-left -->
+
+  <!-- ══ RIGHT PANEL ══════════════════════════════════════════════════ -->
+  <div class="panel-right" id="panel-right">
+    <div class="placeholder">
+      <div class="p-icon">🌺</div>
+      <h3>Your matches will appear here</h3>
+      <p>Set your Taste ID on the left — dietary, occasion, cuisine, atmosphere, island — then hit the button.</p>
+    </div>
+  </div>
+
+</div><!-- /layout -->
+
+<script>
+// ── Slider labels ─────────────────────────────────────────────────────
+const budgetLabels = {1:'$',2:'$$',3:'$$$',4:'$$$$'};
+const noiseLabels  = {1:'LOW',2:'MED',3:'HIGH',4:'MAX'};
+function fmt24(h){
+  if(h===0) return '12:00 AM';
+  if(h<12)  return h+':00 AM';
+  if(h===12)return '12:00 PM';
+  return (h-12)+':00 PM';
+}
+document.getElementById('budget').addEventListener('input',e=>{
+  document.getElementById('budget-val').textContent=budgetLabels[e.target.value];});
+document.getElementById('noise_pref').addEventListener('input',e=>{
+  document.getElementById('noise-val').textContent=noiseLabels[e.target.value];});
+document.getElementById('current_time').addEventListener('input',e=>{
+  document.getElementById('time-display').textContent=fmt24(+e.target.value);});
+
+// ── Build profile ─────────────────────────────────────────────────────
+function getProfile(){
+  return {
+    dietary:      document.querySelector('input[name="dietary"]:checked').value,
+    occasion:     document.querySelector('input[name="occasion"]:checked').value,
+    cuisine:      document.querySelector('input[name="cuisine"]:checked').value,
+    atmosphere:   document.querySelector('input[name="atmosphere"]:checked').value,
+    island:       document.querySelector('input[name="island"]:checked').value,
+    budget:       +document.getElementById('budget').value,
+    noise_pref:   +document.getElementById('noise_pref').value,
+    current_time: +document.getElementById('current_time').value,
+  };
+}
+
+// ── Fetch ─────────────────────────────────────────────────────────────
+async function getRecommendations(){
+  const btn=document.getElementById('btn-go');
+  const panel=document.getElementById('panel-right');
+  btn.disabled=true;
+  panel.innerHTML=`<div class="loading"><div class="spinner"></div><p>Searching across 4 islands&hellip;</p></div>`;
+  try{
+    const resp=await fetch('/recommend',{
+      method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify(getProfile())});
+    if(!resp.ok){const e=await resp.json();throw new Error(e.detail||'Server error');}
+    const data=await resp.json();
+    render(data.recommendations,getProfile());
+  }catch(e){
+    panel.innerHTML=`<div class="err-box">&#9888; ${e.message}</div>`;
+  }finally{btn.disabled=false;}
+}
+
+// ── Render ────────────────────────────────────────────────────────────
+function render(recs,profile){
+  if(!recs||recs.length===0){
+    document.getElementById('panel-right').innerHTML=
+      '<div class="placeholder"><div class="p-icon">&#128533;</div><h3>No matches found</h3><p>Try relaxing your filters — select "All islands" or a broader budget.</p></div>';
+    return;
+  }
+
+  const priceStr = n=>'$'.repeat(n||1);
+  const islandName = {oahu:'Oahu',maui:'Maui',big_island:'Big Island',kauai:'Kauai'};
+  const openStr  = (oh,t)=>{
+    const open=oh.close>oh.open?(t>=oh.open&&t<oh.close):(t>=oh.open||t<oh.close);
+    return open?`<span class="tag tag-open">Open now</span>`:`<span class="tag tag-closed">Closed</span>`;
+  };
+
+  let html=`
+    <div class="results-top">
+      <h2>Top ${recs.length} matches</h2>
+      <span class="results-meta">Ranked by Taste ID &middot; ${new Date().toLocaleTimeString()}</span>
+    </div>`;
+
+  recs.forEach((rec,i)=>{
+    const r  =rec.restaurant;
+    const bd =rec.match_breakdown;
+    const pct=Math.round(rec.final_score*100);
+    const cPct=Math.round(rec.cosine_score*100);
+    const aPct=Math.round(rec.attr_score*100);
+    const barC=Math.round(rec.cosine_score*65);
+    const barA=Math.round(rec.attr_score*35);
+
+    const tags=(r.tags||[]).slice(0,5).map(t=>`<span class="tag">${t}</span>`).join('');
+    const reasons=(rec.explanation||[]).map(r=>
+      `<div class="reason"><span class="check">&#10003;</span><span>${r}</span></div>`).join('');
+
+    html+=`
+      <div class="card">
+        <div class="card-top">
+          <div class="card-left">
+            <div class="card-rank-name">
+              <span class="card-rank">#${i+1}</span>
+              <span class="card-name">${r.name}</span>
+            </div>
+            <div class="card-meta">
+              <span>${r.cuisine}</span>
+              <span class="tag tag-price">${priceStr(r.price_range)}</span>
+              <span class="card-island">${islandName[r.island]||r.island}</span>
+              ${openStr(r.open_hours,profile.current_time)}
+            </div>
+          </div>
+          <div class="score-badge">
+            <div class="score-pct">${pct}%</div>
+            <div class="score-label">match</div>
+          </div>
+        </div>
+
+        <div class="score-bar-section">
+          <div class="bar-labels">
+            <span>Taste DNA</span>
+            <span>Semantic ${cPct}% &middot; Attr ${aPct}%</span>
+          </div>
+          <div class="bar-track">
+            <div class="bar-cosine" style="width:${barC}%"></div>
+            <div class="bar-attr"   style="width:${barA}%"></div>
+          </div>
+          <div class="bar-legend">
+            <span><span class="dot" style="background:var(--blue)"></span>Semantic (65%)</span>
+            <span><span class="dot" style="background:var(--accent)"></span>Attributes (35%)</span>
+          </div>
+        </div>
+
+        <div class="tag-row">${tags}</div>
+
+        <div class="why-head">Why Ka&apos;ana picked this</div>
+        ${reasons}
+
+        <div class="card-desc">${r.description}</div>
+      </div>`;
+  });
+
+  // ── Top-3 comparison ────────────────────────────────────────────────
+  if(recs.length>=3){
+    const top3=recs.slice(0,3);
+    const dims=[
+      {key:'semantic_similarity',label:'Taste DNA',         color:'var(--blue)'},
+      {key:'price_match',        label:'Budget',            color:'var(--green)'},
+      {key:'occasion_match',     label:'Occasion',          color:'var(--accent)'},
+      {key:'noise_match',        label:'Atmosphere',        color:'#7a6bac'},
+      {key:'open_now',           label:'Open now',          color:'var(--green)'},
+      {key:'island_match',       label:'Island',            color:'var(--blue)'},
+      {key:'overall_score',      label:'Overall score',     color:'var(--accent)'},
+    ];
+    const iName={oahu:'Oahu',maui:'Maui',big_island:'Big Island',kauai:'Kauai'};
+    html+=`
+      <div class="cmp-wrap">
+        <h3>Top 3 side-by-side</h3>
+        <p class="sub">Why #1 ranks above #2 and #3 — dimension breakdown</p>
+        <table class="cmp">
+          <thead><tr>
+            <th>Dimension</th>
+            ${top3.map((r,i)=>`<th>#${i+1} ${r.restaurant.name.split(' ').slice(0,2).join(' ')}<br>
+              <span style="font-size:9px;font-weight:600;text-transform:uppercase">
+                ${iName[r.restaurant.island]||''}</span></th>`).join('')}
+          </tr></thead>
+          <tbody>
+            ${dims.map(d=>`<tr>
+              <td class="dim-label">${d.label}</td>
+              ${top3.map(r=>{
+                const v=r.match_breakdown[d.key]||0;
+                const p=Math.round(v*100);
+                return `<td>
+                  <div class="mini-track">
+                    <div class="mini-fill" style="width:${p}%;background:${d.color}"></div>
+                  </div>
+                  <div class="pct-text">${p}%</div>
+                </td>`;
+              }).join('')}
+            </tr>`).join('')}
+          </tbody>
+        </table>
+      </div>`;
+  }
+
+  document.getElementById('panel-right').innerHTML=html;
+}
+</script>
+</body>
+</html>
