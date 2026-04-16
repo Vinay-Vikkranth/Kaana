@@ -1,0 +1,1242 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+  <title>Kaʻana — Taste Lab</title>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700;900&display=swap" rel="stylesheet" />
+  <style>
+    /* ─── DESIGN TOKENS ─────────────────────────────────────────── */
+    :root {
+      --bg:      #ede8de;
+      --text:    #1a1510;
+      --border:  #1a1510;
+      --shadow:  4px 4px 0 #1a1510;
+      --accent:  #b8705a;
+      --muted:   #6a5a4a;
+      /* Taste colours */
+      --umami:   #7c3aed;
+      --sweet:   #e8527a;
+      --sour:    #7ab510;
+      --salty:   #2e7fd4;
+      --bitter:  #3d7a4a;
+      --heat:    #e05a2a;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html, body {
+      height: 100%;
+      overflow: hidden;
+      background: var(--bg);
+      font-family: 'DM Sans', system-ui, sans-serif;
+      color: var(--text);
+    }
+
+    /* ─── SCREENS ───────────────────────────────────────────────── */
+    .screen {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 24px 20px 32px;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.3s ease;
+    }
+    .screen.active {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    /* ─── TYPOGRAPHY ─────────────────────────────────────────────── */
+    .kaana-logo {
+      font-size: 11px;
+      font-weight: 900;
+      letter-spacing: 0.28em;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin-bottom: 4px;
+    }
+    .tag-pill {
+      display: inline-block;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      border: 2px solid var(--border);
+      padding: 3px 10px;
+      background: var(--bg);
+    }
+    h1 {
+      font-size: clamp(2rem, 9vw, 3.4rem);
+      font-weight: 900;
+      text-transform: uppercase;
+      line-height: 1.0;
+      letter-spacing: -0.02em;
+    }
+    h2 {
+      font-size: clamp(1.5rem, 6vw, 2.4rem);
+      font-weight: 900;
+      text-transform: uppercase;
+      letter-spacing: -0.01em;
+      line-height: 1.05;
+    }
+
+    /* ─── BUTTONS ────────────────────────────────────────────────── */
+    .btn {
+      display: inline-block;
+      padding: 14px 30px;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 13px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      border: 2.5px solid var(--border);
+      box-shadow: var(--shadow);
+      cursor: pointer;
+      background: var(--text);
+      color: var(--bg);
+      transition: transform 0.1s, box-shadow 0.1s;
+      text-decoration: none;
+    }
+    .btn:active { transform: translate(2px,2px); box-shadow: 2px 2px 0 var(--border); }
+    .btn-ghost {
+      background: var(--bg);
+      color: var(--text);
+    }
+
+    /* ─── PROGRESS ───────────────────────────────────────────────── */
+    .progress-wrap {
+      width: 100%;
+      max-width: 440px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin: 8px 0 16px;
+    }
+    .progress-track {
+      flex: 1;
+      height: 5px;
+      background: rgba(26,21,16,0.13);
+      border-radius: 3px;
+      overflow: hidden;
+    }
+    .progress-fill {
+      height: 100%;
+      background: var(--accent);
+      border-radius: 3px;
+      transition: width 0.45s ease;
+    }
+    .progress-label {
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--muted);
+      white-space: nowrap;
+    }
+
+    /* ─── STEP DOTS ──────────────────────────────────────────────── */
+    .step-dots {
+      display: flex;
+      gap: 7px;
+    }
+    .dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: rgba(26,21,16,0.18);
+      transition: background 0.3s, transform 0.3s;
+    }
+    .dot.done    { background: var(--accent); }
+    .dot.active  { background: var(--text); transform: scale(1.3); }
+
+    /* ─── TONGUE SVG WRAPPER ─────────────────────────────────────── */
+    .tongue-stage {
+      position: relative;
+      width: 210px;
+      height: 285px;
+      margin: 0 auto;
+      perspective: 900px;
+    }
+    .tongue-tilt {
+      width: 100%;
+      height: 100%;
+      transform: rotateX(14deg);
+      transform-origin: center top;
+      filter: drop-shadow(0 16px 28px rgba(0,0,0,0.32));
+    }
+
+    /* Zone pulse animation in intro */
+    .zpulse { animation: zpulse 5.5s ease-in-out infinite; opacity: 0; }
+    #zi-sweet   { animation-delay: 0.0s; }
+    #zi-salty-l,#zi-salty-r { animation-delay: 0.9s; }
+    #zi-sour-l, #zi-sour-r  { animation-delay: 1.8s; }
+    #zi-umami   { animation-delay: 2.7s; }
+    #zi-bitter  { animation-delay: 3.6s; }
+    @keyframes zpulse {
+      0%,78%,100% { opacity: 0; }
+      25%,55%     { opacity: 0.80; }
+    }
+
+    /* Floating animation for intro tongue */
+    .tongue-float {
+      animation: tFloat 3.8s ease-in-out infinite;
+    }
+    @keyframes tFloat {
+      0%,100% { transform: rotateX(14deg) translateY(0px); }
+      50%      { transform: rotateX(9deg)  translateY(-8px); }
+    }
+
+    /* ─── INTRO SCREEN ───────────────────────────────────────────── */
+    #screen-intro {
+      justify-content: center;
+      text-align: center;
+      gap: 28px;
+    }
+    .intro-kicker {
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--accent);
+    }
+    .intro-sub {
+      font-size: 15px;
+      color: var(--muted);
+      line-height: 1.6;
+      max-width: 290px;
+      margin: 0 auto;
+    }
+
+    /* ─── TASTE SCREEN ───────────────────────────────────────────── */
+    #screen-taste {
+      gap: 0;
+    }
+    .taste-topbar {
+      width: 100%;
+      max-width: 440px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 6px;
+    }
+
+    /* Animated content wrapper — fades on taste change */
+    #taste-content {
+      width: 100%;
+      max-width: 440px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0;
+      transition: opacity 0.22s ease;
+    }
+
+    .taste-hero {
+      width: 100%;
+      border: 2.5px solid var(--border);
+      box-shadow: var(--shadow);
+      padding: 22px 20px 18px;
+      text-align: center;
+      margin-bottom: 14px;
+      background: white;
+      border-top-width: 7px; /* accent bar — color set by JS */
+      transition: border-top-color 0.3s;
+    }
+    .taste-big-emoji { font-size: 52px; display: block; margin-bottom: 10px; }
+    .taste-name-lbl {
+      font-size: 9px;
+      font-weight: 700;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 4px;
+    }
+    .taste-question {
+      font-size: 14px;
+      color: var(--muted);
+      margin-top: 6px;
+      line-height: 1.5;
+    }
+
+    /* Food examples row */
+    .food-row {
+      display: flex;
+      gap: 10px;
+      width: 100%;
+      margin-bottom: 16px;
+    }
+    .food-tile {
+      flex: 1;
+      border: 2px solid var(--border);
+      box-shadow: 3px 3px 0 var(--border);
+      padding: 12px 8px;
+      text-align: center;
+      background: var(--bg);
+    }
+    .food-icon  { font-size: 26px; display: block; margin-bottom: 6px; }
+    .food-name  { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; line-height: 1.3; }
+    .food-note  { font-size: 10px; color: var(--muted); margin-top: 3px; line-height: 1.3; }
+
+    /* Intensity buttons */
+    .intensity-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      width: 100%;
+      margin-bottom: 16px;
+    }
+    .ibtn {
+      border: 2.5px solid var(--border);
+      padding: 15px 10px;
+      text-align: center;
+      cursor: pointer;
+      background: var(--bg);
+      box-shadow: 3px 3px 0 var(--border);
+      transition: transform 0.1s, box-shadow 0.1s, background 0.18s, color 0.18s;
+    }
+    .ibtn:hover { background: rgba(26,21,16,0.06); }
+    .ibtn.selected {
+      background: var(--current-taste-color, var(--accent));
+      color: white;
+      transform: translate(1px,1px);
+      box-shadow: 2px 2px 0 var(--border);
+    }
+    .ibtn-label {
+      font-size: 12px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      display: block;
+    }
+    .ibtn-dots {
+      font-size: 15px;
+      margin-top: 4px;
+      letter-spacing: 3px;
+      color: inherit;
+    }
+
+    /* ─── TEXTURE SCREEN ─────────────────────────────────────────── */
+    #screen-texture { gap: 0; }
+    .section-header {
+      width: 100%;
+      max-width: 440px;
+      text-align: center;
+      margin: 14px 0 20px;
+    }
+    .section-kicker {
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin-bottom: 8px;
+    }
+    .texture-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      width: 100%;
+      max-width: 440px;
+    }
+    .texture-card {
+      border: 2.5px solid var(--border);
+      box-shadow: 4px 4px 0 var(--border);
+      padding: 26px 16px;
+      text-align: center;
+      cursor: pointer;
+      background: var(--bg);
+      transition: transform 0.12s, box-shadow 0.12s, background 0.18s, color 0.18s;
+    }
+    .texture-card:hover { background: rgba(26,21,16,0.06); }
+    .texture-card.selected {
+      background: var(--text);
+      color: var(--bg);
+      transform: translate(2px,2px);
+      box-shadow: 2px 2px 0 var(--border);
+    }
+    .tex-icon { font-size: 36px; display: block; margin-bottom: 10px; }
+    .tex-name { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; }
+    .tex-desc { font-size: 11px; color: var(--muted); margin-top: 5px; line-height: 1.4; }
+    .texture-card.selected .tex-desc { color: rgba(237,232,222,0.65); }
+
+    /* ─── HEAT SCREEN ────────────────────────────────────────────── */
+    #screen-heat { gap: 0; }
+    .heat-display {
+      text-align: center;
+      margin: 28px 0 24px;
+    }
+    .heat-big-emoji {
+      font-size: 64px;
+      display: block;
+      margin-bottom: 10px;
+      transition: all 0.25s ease;
+    }
+    .heat-desc-txt {
+      font-size: 14px;
+      color: var(--muted);
+      transition: all 0.25s;
+    }
+    .heat-slider-wrap { width: 100%; max-width: 400px; }
+    input[type=range].heat-range {
+      -webkit-appearance: none;
+      width: 100%;
+      height: 12px;
+      background: linear-gradient(to right, #8cb52a, #e8b020, var(--heat), #8b1500);
+      border: 2.5px solid var(--border);
+      outline: none;
+      cursor: pointer;
+      margin-bottom: 12px;
+    }
+    input[type=range].heat-range::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 30px;
+      height: 30px;
+      background: var(--bg);
+      border: 3px solid var(--border);
+      box-shadow: 3px 3px 0 var(--border);
+      cursor: grab;
+    }
+    input[type=range].heat-range::-webkit-slider-thumb:active { cursor: grabbing; }
+    .heat-scale {
+      display: flex;
+      justify-content: space-between;
+    }
+    .heat-scale-lbl {
+      font-size: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--muted);
+    }
+
+    /* ─── REVEAL SCREEN ──────────────────────────────────────────── */
+    #screen-reveal { gap: 16px; }
+
+    .reveal-tongue-stage {
+      position: relative;
+      width: 180px;
+      height: 244px;
+      margin: 4px auto 0;
+      perspective: 900px;
+    }
+    .reveal-tongue-tilt {
+      width: 100%;
+      height: 100%;
+      transform: rotateX(14deg);
+      transform-origin: center top;
+      filter: drop-shadow(0 12px 20px rgba(0,0,0,0.25));
+    }
+    /* Zone reveal transitions */
+    .rzone {
+      transition: opacity 0.65s ease;
+    }
+
+    .archetype-card {
+      width: 100%;
+      max-width: 400px;
+      border: 2.5px solid var(--border);
+      box-shadow: var(--shadow);
+      padding: 20px;
+      background: var(--text);
+      color: var(--bg);
+      text-align: center;
+      opacity: 0;
+      transition: opacity 0.5s ease;
+    }
+    .arch-emoji-big { font-size: 38px; display: block; margin-bottom: 8px; }
+    .arch-kicker {
+      font-size: 9px;
+      font-weight: 700;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin-bottom: 4px;
+    }
+    .arch-name {
+      font-size: 21px;
+      font-weight: 900;
+      text-transform: uppercase;
+      letter-spacing: -0.01em;
+      line-height: 1.1;
+    }
+    .arch-desc {
+      font-size: 13px;
+      color: rgba(237,232,222,0.78);
+      margin-top: 8px;
+      line-height: 1.6;
+    }
+    .arch-match {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--accent);
+      margin-top: 12px;
+    }
+
+    /* K-TID box */
+    .ktid-box {
+      width: 100%;
+      max-width: 400px;
+      border: 2.5px solid var(--border);
+      box-shadow: var(--shadow);
+      padding: 16px 18px;
+      background: var(--bg);
+      opacity: 0;
+      transition: opacity 0.5s ease;
+    }
+    .ktid-top-lbl {
+      font-size: 9px;
+      font-weight: 700;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 8px;
+    }
+    .ktid-code-str {
+      font-family: 'Courier New', monospace;
+      font-size: 17px;
+      font-weight: 900;
+      letter-spacing: 0.03em;
+      word-break: break-all;
+    }
+    /* Bar chart */
+    .ktid-bars {
+      display: flex;
+      gap: 8px;
+      margin-top: 16px;
+      align-items: flex-end;
+      height: 64px;
+    }
+    .kbar-wrap { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 5px; }
+    .kbar-track {
+      width: 100%;
+      height: 60px;
+      background: rgba(26,21,16,0.1);
+      border: 1.5px solid rgba(26,21,16,0.18);
+      border-radius: 3px;
+      overflow: hidden;
+      display: flex;
+      align-items: flex-end;
+    }
+    .kbar-fill {
+      width: 100%;
+      border-radius: 3px 3px 0 0;
+      transition: height 1.1s cubic-bezier(0.34,1.56,0.64,1);
+      height: 0%;
+    }
+    .kbar-lbl {
+      font-size: 9px;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+
+    /* Reveal CTA block */
+    .reveal-cta {
+      width: 100%;
+      max-width: 400px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      opacity: 0;
+      transition: opacity 0.5s ease;
+    }
+    .reveal-cta .btn { text-align: center; width: 100%; }
+    .back-link {
+      text-align: center;
+      font-size: 12px;
+      color: var(--muted);
+      text-decoration: none;
+      margin-top: 4px;
+    }
+  </style>
+</head>
+<body>
+
+<!-- ════════════════════════════════════════════════════════════
+     SCREEN 1 — INTRO
+════════════════════════════════════════════════════════════ -->
+<div id="screen-intro" class="screen active">
+  <div class="kaana-logo">Kaʻana</div>
+
+  <div class="tongue-stage">
+    <div class="tongue-tilt tongue-float">
+      <svg viewBox="0 0 240 300" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:100%">
+        <defs>
+          <radialGradient id="tBase" cx="42%" cy="32%" r="62%">
+            <stop offset="0%"   stop-color="#f0909e"/>
+            <stop offset="55%"  stop-color="#d95870"/>
+            <stop offset="100%" stop-color="#a82848"/>
+          </radialGradient>
+          <radialGradient id="tHighlight" cx="50%" cy="22%" r="44%">
+            <stop offset="0%"   stop-color="rgba(255,255,255,0.42)"/>
+            <stop offset="100%" stop-color="rgba(255,255,255,0)"/>
+          </radialGradient>
+          <clipPath id="tClip">
+            <path d="M120,18 C198,18 218,90 218,158 C218,228 178,282 120,294 C62,282 22,228 22,158 C22,90 42,18 120,18 Z"/>
+          </clipPath>
+        </defs>
+
+        <!-- Tongue base -->
+        <path d="M120,18 C198,18 218,90 218,158 C218,228 178,282 120,294 C62,282 22,228 22,158 C22,90 42,18 120,18 Z"
+              fill="url(#tBase)" stroke="#902038" stroke-width="1"/>
+
+        <!-- Zones (clipped to tongue) -->
+        <g clip-path="url(#tClip)">
+          <ellipse id="zi-sweet"   class="zpulse" cx="120" cy="268" rx="50" ry="24" fill="#e8527a"/>
+          <ellipse id="zi-salty-l" class="zpulse" cx="60"  cy="225" rx="32" ry="42" fill="#2e7fd4"/>
+          <ellipse id="zi-salty-r" class="zpulse" cx="180" cy="225" rx="32" ry="42" fill="#2e7fd4"/>
+          <ellipse id="zi-sour-l"  class="zpulse" cx="36"  cy="148" rx="24" ry="62" fill="#7ab510"/>
+          <ellipse id="zi-sour-r"  class="zpulse" cx="204" cy="148" rx="24" ry="62" fill="#7ab510"/>
+          <ellipse id="zi-umami"   class="zpulse" cx="120" cy="158" rx="66" ry="88" fill="#7c3aed"/>
+          <ellipse id="zi-bitter"  class="zpulse" cx="120" cy="52"  rx="66" ry="34" fill="#3d7a4a"/>
+        </g>
+
+        <!-- Highlight -->
+        <path d="M120,18 C198,18 218,90 218,158 C218,228 178,282 120,294 C62,282 22,228 22,158 C22,90 42,18 120,18 Z"
+              fill="url(#tHighlight)"/>
+
+        <!-- Labels -->
+        <g font-family="'DM Sans',sans-serif" font-weight="700" font-size="9" text-anchor="middle"
+           fill="rgba(255,255,255,0.88)" letter-spacing="0.8">
+          <text x="120" y="57">BITTER</text>
+          <text x="30"  y="142" transform="rotate(-90,30,142)">SOUR</text>
+          <text x="210" y="142" transform="rotate(90,210,142)">SOUR</text>
+          <text x="120" y="162">UMAMI</text>
+          <text x="60"  y="229" font-size="8">SALTY</text>
+          <text x="180" y="229" font-size="8">SALTY</text>
+          <text x="120" y="272">SWEET</text>
+        </g>
+      </svg>
+    </div>
+  </div>
+
+  <div>
+    <div class="intro-kicker" style="margin-bottom:10px;">Taste Lab · Version 6</div>
+    <h1>Map Your<br/>Palate.</h1>
+  </div>
+
+  <p class="intro-sub">Five tastes. Ninety seconds.<br/>Your flavor identity, decoded.</p>
+
+  <button class="btn" onclick="beginMapping()" style="min-width:210px;">Begin Mapping →</button>
+
+  <a href="/selector.html" class="back-link" style="margin-top:4px;">← All versions</a>
+</div>
+
+
+<!-- ════════════════════════════════════════════════════════════
+     SCREEN 2 — TASTE (reused for all 5 tastes via JS)
+════════════════════════════════════════════════════════════ -->
+<div id="screen-taste" class="screen">
+  <div class="taste-topbar">
+    <div class="kaana-logo">Kaʻana</div>
+    <div class="step-dots" id="step-dots-taste"></div>
+  </div>
+
+  <div class="progress-wrap">
+    <div class="progress-track">
+      <div class="progress-fill" id="taste-progress" style="width:0%"></div>
+    </div>
+    <span class="progress-label" id="taste-step-lbl">1 / 5</span>
+  </div>
+
+  <!-- All taste content lives here — fades between tastes -->
+  <div id="taste-content" style="width:100%;max-width:440px;display:flex;flex-direction:column;align-items:center;">
+    <div class="taste-hero" id="taste-hero">
+      <span class="taste-big-emoji" id="taste-emoji">🍜</span>
+      <div class="taste-name-lbl" id="taste-name-lbl">Umami</div>
+      <h2 id="taste-h2" style="margin-bottom:4px;">Umami</h2>
+      <p class="taste-question" id="taste-question">How much do you crave deep, savory richness?</p>
+    </div>
+
+    <div class="food-row" id="food-row"><!-- filled by JS --></div>
+
+    <div class="intensity-grid" id="intensity-grid">
+      <button class="ibtn" data-val="0" onclick="pickIntensity(0, this)">
+        <span class="ibtn-label">Not my thing</span>
+        <div class="ibtn-dots">○○○</div>
+      </button>
+      <button class="ibtn" data-val="1" onclick="pickIntensity(1, this)">
+        <span class="ibtn-label">Sometimes</span>
+        <div class="ibtn-dots">●○○</div>
+      </button>
+      <button class="ibtn" data-val="2" onclick="pickIntensity(2, this)">
+        <span class="ibtn-label">Love it</span>
+        <div class="ibtn-dots">●●○</div>
+      </button>
+      <button class="ibtn" data-val="3" onclick="pickIntensity(3, this)">
+        <span class="ibtn-label">Obsessed</span>
+        <div class="ibtn-dots">●●●</div>
+      </button>
+    </div>
+  </div>
+</div>
+
+
+<!-- ════════════════════════════════════════════════════════════
+     SCREEN 3 — TEXTURE
+════════════════════════════════════════════════════════════ -->
+<div id="screen-texture" class="screen">
+  <div style="width:100%;max-width:440px;display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+    <div class="kaana-logo">Kaʻana</div>
+    <div class="step-dots">
+      <div class="dot done"></div><div class="dot done"></div><div class="dot done"></div>
+      <div class="dot done"></div><div class="dot done"></div>
+      <div class="dot active"></div><div class="dot"></div>
+    </div>
+  </div>
+  <div class="progress-wrap">
+    <div class="progress-track"><div class="progress-fill" style="width:72%"></div></div>
+    <span class="progress-label">Texture</span>
+  </div>
+
+  <div class="section-header">
+    <div class="section-kicker">Mouthfeel</div>
+    <h2>How do you<br/>like to eat?</h2>
+    <p style="font-size:14px;color:var(--muted);margin-top:8px;line-height:1.5;">Texture shapes the whole experience —<br/>sometimes more than flavor.</p>
+  </div>
+
+  <div class="texture-grid">
+    <div class="texture-card" onclick="pickTexture('crispy', this)">
+      <span class="tex-icon">🥐</span>
+      <div class="tex-name">Crispy</div>
+      <div class="tex-desc">Crunchy, toasted, crackling — contrast with every bite</div>
+    </div>
+    <div class="texture-card" onclick="pickTexture('soft', this)">
+      <span class="tex-icon">🍚</span>
+      <div class="tex-name">Soft &amp; Tender</div>
+      <div class="tex-desc">Yielding, pillowy, melt-in-mouth satisfaction</div>
+    </div>
+    <div class="texture-card" onclick="pickTexture('creamy', this)">
+      <span class="tex-icon">🥑</span>
+      <div class="tex-name">Creamy</div>
+      <div class="tex-desc">Smooth, rich, velvety — coats the palate</div>
+    </div>
+    <div class="texture-card" onclick="pickTexture('mixed', this)">
+      <span class="tex-icon">🌮</span>
+      <div class="tex-name">Contrasts</div>
+      <div class="tex-desc">Layers of texture — depends on the dish, the mood</div>
+    </div>
+  </div>
+</div>
+
+
+<!-- ════════════════════════════════════════════════════════════
+     SCREEN 4 — HEAT
+════════════════════════════════════════════════════════════ -->
+<div id="screen-heat" class="screen">
+  <div style="width:100%;max-width:440px;display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+    <div class="kaana-logo">Kaʻana</div>
+    <div class="step-dots">
+      <div class="dot done"></div><div class="dot done"></div><div class="dot done"></div>
+      <div class="dot done"></div><div class="dot done"></div>
+      <div class="dot done"></div><div class="dot active"></div>
+    </div>
+  </div>
+  <div class="progress-wrap">
+    <div class="progress-track"><div class="progress-fill" style="width:88%"></div></div>
+    <span class="progress-label">Heat</span>
+  </div>
+
+  <div class="section-header" style="margin-top:12px;">
+    <div class="section-kicker">Spice &amp; Heat</div>
+    <h2>How spicy<br/>do you go?</h2>
+  </div>
+
+  <div class="heat-display">
+    <span class="heat-big-emoji" id="heat-emoji">🌿</span>
+    <p class="heat-desc-txt" id="heat-desc">No heat, ever — keep it clean and gentle</p>
+  </div>
+
+  <div class="heat-slider-wrap" style="width:100%;max-width:400px;">
+    <input type="range" class="heat-range" id="heat-slider" min="0" max="3" step="1" value="0"
+           oninput="updateHeat(this.value)" />
+    <div class="heat-scale">
+      <span class="heat-scale-lbl">🌿 No heat</span>
+      <span class="heat-scale-lbl">🌶️ A kick</span>
+      <span class="heat-scale-lbl">🔥 Bring it</span>
+      <span class="heat-scale-lbl">💀 Max</span>
+    </div>
+  </div>
+
+  <button class="btn" onclick="goReveal()" style="margin-top:36px;min-width:220px;">Reveal My Palate →</button>
+</div>
+
+
+<!-- ════════════════════════════════════════════════════════════
+     SCREEN 5 — REVEAL
+════════════════════════════════════════════════════════════ -->
+<div id="screen-reveal" class="screen">
+  <div class="kaana-logo" style="margin-bottom:6px;">Kaʻana</div>
+  <div class="tag-pill">Your Flavor Identity</div>
+
+  <!-- Tongue heat map -->
+  <div class="reveal-tongue-stage">
+    <div class="reveal-tongue-tilt">
+      <svg id="reveal-svg" viewBox="0 0 240 300" xmlns="http://www.w3.org/2000/svg"
+           style="width:100%;height:100%">
+        <defs>
+          <radialGradient id="rtBase" cx="42%" cy="32%" r="62%">
+            <stop offset="0%"   stop-color="#f0909e"/>
+            <stop offset="55%"  stop-color="#d95870"/>
+            <stop offset="100%" stop-color="#a82848"/>
+          </radialGradient>
+          <radialGradient id="rtHighlight" cx="50%" cy="22%" r="44%">
+            <stop offset="0%"   stop-color="rgba(255,255,255,0.35)"/>
+            <stop offset="100%" stop-color="rgba(255,255,255,0)"/>
+          </radialGradient>
+          <clipPath id="rtClip">
+            <path d="M120,18 C198,18 218,90 218,158 C218,228 178,282 120,294 C62,282 22,228 22,158 C22,90 42,18 120,18 Z"/>
+          </clipPath>
+        </defs>
+
+        <path d="M120,18 C198,18 218,90 218,158 C218,228 178,282 120,294 C62,282 22,228 22,158 C22,90 42,18 120,18 Z"
+              fill="url(#rtBase)" stroke="#902038" stroke-width="1"/>
+
+        <g clip-path="url(#rtClip)">
+          <ellipse id="rz-sweet"   class="rzone" cx="120" cy="268" rx="50" ry="24" fill="#e8527a" style="opacity:0"/>
+          <ellipse id="rz-salty-l" class="rzone" cx="60"  cy="225" rx="32" ry="42" fill="#2e7fd4" style="opacity:0"/>
+          <ellipse id="rz-salty-r" class="rzone" cx="180" cy="225" rx="32" ry="42" fill="#2e7fd4" style="opacity:0"/>
+          <ellipse id="rz-sour-l"  class="rzone" cx="36"  cy="148" rx="24" ry="62" fill="#7ab510" style="opacity:0"/>
+          <ellipse id="rz-sour-r"  class="rzone" cx="204" cy="148" rx="24" ry="62" fill="#7ab510" style="opacity:0"/>
+          <ellipse id="rz-umami"   class="rzone" cx="120" cy="158" rx="66" ry="88" fill="#7c3aed" style="opacity:0"/>
+          <ellipse id="rz-bitter"  class="rzone" cx="120" cy="52"  rx="66" ry="34" fill="#3d7a4a" style="opacity:0"/>
+        </g>
+
+        <path d="M120,18 C198,18 218,90 218,158 C218,228 178,282 120,294 C62,282 22,228 22,158 C22,90 42,18 120,18 Z"
+              fill="url(#rtHighlight)"/>
+
+        <g font-family="'DM Sans',sans-serif" font-weight="700" font-size="9" text-anchor="middle"
+           fill="rgba(255,255,255,0.88)" letter-spacing="0.8">
+          <text x="120" y="57">BITTER</text>
+          <text x="30"  y="142" transform="rotate(-90,30,142)">SOUR</text>
+          <text x="210" y="142" transform="rotate(90,210,142)">SOUR</text>
+          <text x="120" y="162">UMAMI</text>
+          <text x="60"  y="229" font-size="8">SALTY</text>
+          <text x="180" y="229" font-size="8">SALTY</text>
+          <text x="120" y="272">SWEET</text>
+        </g>
+      </svg>
+    </div>
+  </div>
+
+  <!-- Archetype card -->
+  <div class="archetype-card" id="archetype-card">
+    <span class="arch-emoji-big" id="arch-emoji">🍜</span>
+    <div class="arch-kicker">Your Taste Archetype</div>
+    <div class="arch-name" id="arch-name">The Umami Hunter</div>
+    <div class="arch-desc" id="arch-desc">You live for depth and savoriness.</div>
+    <div class="arch-match" id="arch-match">🌺 Miso butterfish · Shoyu poke · Ramen</div>
+  </div>
+
+  <!-- K-TID code + bars -->
+  <div class="ktid-box" id="ktid-box">
+    <div class="ktid-top-lbl">Your K-TID Flavor Code</div>
+    <div class="ktid-code-str" id="ktid-str">K-TID: —</div>
+    <div class="ktid-bars" id="ktid-bars"><!-- filled by JS --></div>
+  </div>
+
+  <!-- CTA -->
+  <div class="reveal-cta" id="reveal-cta">
+    <button class="btn" onclick="findRestaurants()">Find My Restaurants →</button>
+    <button class="btn btn-ghost" onclick="shareKTID()">Share My K-TID</button>
+    <a href="/selector.html" class="back-link">Try another version</a>
+  </div>
+</div>
+
+
+<!-- ════════════════════════════════════════════════════════════
+     JAVASCRIPT
+════════════════════════════════════════════════════════════ -->
+<script>
+// ── DATA ──────────────────────────────────────────────────────────────
+const TASTES = [
+  {
+    key: 'umami', name: 'UMAMI', emoji: '🍜', color: '#7c3aed',
+    subtitle: 'Savory depth — broths, miso, soy, aged and fermented flavors.',
+    question: 'How much do you crave deep, savory richness?',
+    foods: [
+      { icon:'🐟', name:'Misoyaki Butterfish', note:'Caramelized miso glaze, silky' },
+      { icon:'🍜', name:'Tonkotsu Ramen',      note:'Rich 12-hour pork broth' },
+      { icon:'🐠', name:'Shoyu Poke',          note:'Soy-marinated ahi, sesame' },
+    ]
+  },
+  {
+    key: 'sweet', name: 'SWEET', emoji: '🍯', color: '#e8527a',
+    subtitle: 'Honey, tropical fruit, caramel, coconut, dessert warmth.',
+    question: 'How much do you love sweetness in your food?',
+    foods: [
+      { icon:'🍩', name:'Malasadas',  note:'Hot Portuguese donuts, sugar-rolled' },
+      { icon:'🫐', name:'Acai Bowl',  note:'Tropical berries, drizzled honey' },
+      { icon:'🥥', name:'Haupia',     note:'Coconut cream pudding, silky sweet' },
+    ]
+  },
+  {
+    key: 'sour', name: 'SOUR', emoji: '🍋', color: '#7ab510',
+    subtitle: 'Citrus, lilikoi, vinegar, ferment — bright and tangy.',
+    question: 'How much do you love bright, tangy, acidic flavors?',
+    foods: [
+      { icon:'🍋', name:'Lilikoi Malasadas', note:'Passion fruit curd, sharp tang' },
+      { icon:'🌿', name:'Green Papaya Salad',note:'Lime, chili, vinegar dressing' },
+      { icon:'🍊', name:'Ceviche Poke',      note:'Citrus-cured fish, bright lift' },
+    ]
+  },
+  {
+    key: 'salty', name: 'SALTY', emoji: '🧂', color: '#2e7fd4',
+    subtitle: 'Sea salt, soy, miso crust, cured fish — oceanic and mineral.',
+    question: 'How much do you love salty, briny, mineral flavors?',
+    foods: [
+      { icon:'🐷', name:'Kalua Pig',     note:'Slow-smoked, sea-salted, tender' },
+      { icon:'🍗', name:'Shoyu Chicken', note:'Caramelized, salty-sweet glaze' },
+      { icon:'🥡', name:'Saimin',        note:'Clear broth, fish cake, sea-salt' },
+    ]
+  },
+  {
+    key: 'bitter', name: 'BITTER', emoji: '☕', color: '#3d7a4a',
+    subtitle: 'Coffee, dark chocolate, bitter greens, hops, tonic.',
+    question: 'Do you appreciate bitter, complex, grown-up flavors?',
+    foods: [
+      { icon:'☕', name:'Kona Dark Roast',   note:'Single-origin, bold, earthy' },
+      { icon:'🍫', name:'Dark Choc Haupia',  note:'Bittersweet coconut parfait' },
+      { icon:'🍺', name:'Pacific IPA',       note:'Floral hops, lasting bitterness' },
+    ]
+  },
+];
+
+const ARCHETYPES = [
+  {
+    name:'The Umami Hunter', emoji:'🍜',
+    cond: s => s.umami >= 2 && s.umami >= s.sweet && s.umami >= s.sour && s.umami >= s.bitter,
+    desc:'You live for depth and savoriness. Rich broths, miso glazes, fermented complexity — you seek the deeply, fully satisfying.',
+    match:'Misoyaki butterfish · Shoyu poke · Miso ramen'
+  },
+  {
+    name:'The Sweet Soul', emoji:'🍯',
+    cond: s => s.sweet >= 2 && s.sweet >= s.umami && s.sweet > s.bitter,
+    desc:'Life is sweeter with you around. Tropical fruits, dessert warmth, coconut — you gravitate toward the comforting and indulgent.',
+    match:'Malasadas · Acai bowls · Haupia pie'
+  },
+  {
+    name:'The Bright & Tangy', emoji:'🍋',
+    cond: s => s.sour >= 2 && s.sour >= s.sweet && s.sour >= s.bitter,
+    desc:'You love brightness and lift. Citrus, passion fruit, fermented tang — the flavors that make everything pop and sing.',
+    match:'Lilikoi desserts · Ceviche poke · Yuzu dishes'
+  },
+  {
+    name:'The Connoisseur', emoji:'☕',
+    cond: s => s.bitter >= 2 && s.umami >= 1,
+    desc:"You've graduated beyond the obvious. Coffee, dark chocolate, bitter greens — complexity is your comfort zone and your standard.",
+    match:'Kona dark roast · Farm-to-table · Craft cocktails'
+  },
+  {
+    name:'The Bold Taster', emoji:'🌶️',
+    cond: s => s.heat >= 2 && (s.sour >= 2 || s.salty >= 2),
+    desc:'Intensity is your language. Heat, tang, edge — the flavors that demand attention and linger long after the last bite.',
+    match:'Spicy ahi poke · Thai boat noodles · Kimchi'
+  },
+  {
+    name:'The Savory Classic', emoji:'🧂',
+    cond: s => s.salty >= 2 && s.sweet <= 1,
+    desc:'Crisp, seasoned, and deeply satisfying. You gravitate to the timeless — well-salted, hearty, comforting, no nonsense.',
+    match:'Plate lunch · Kalua pig · Saimin'
+  },
+  {
+    name:'The Full Palate', emoji:'🌈',
+    cond: s => {
+      const vals=[s.sweet,s.salty,s.sour,s.bitter,s.umami];
+      const avg=vals.reduce((a,b)=>a+b,0)/5;
+      return avg>=1.5 && (Math.max(...vals)-Math.min(...vals))<=1;
+    },
+    desc:'Nothing escapes you. You love the full spectrum — balanced, curious, and genuinely open to wherever the menu takes you.',
+    match:'Any island · Any cuisine · The whole experience'
+  },
+  {
+    name:'The Gentle Palate', emoji:'🌸',
+    cond: ()=>true,                            // fallback
+    desc:'You prefer clean, delicate flavors. Light and fresh over intense — food should be nourishing, gentle, never overwhelming.',
+    match:'Fresh sashimi · Light salads · Coconut dishes'
+  },
+];
+
+const HEAT_EMOJIS = ['🌿','🌶️','🔥','💀'];
+const HEAT_DESCS  = [
+  'No heat, ever — keep it clean and gentle',
+  'A little kick is very welcome',
+  'Bring the heat on — the more the better',
+  'I chase pain — maximum spice, always'
+];
+const TEX_CODES = { crispy:'K', soft:'S', creamy:'C', mixed:'M' };
+
+// ── STATE ─────────────────────────────────────────────────────────────
+const scores  = { umami:null, sweet:null, sour:null, salty:null, bitter:null };
+let texture   = null;
+let heat      = 0;
+let tasteIdx  = 0;
+let picking   = false;
+
+// ── SCREEN MANAGEMENT ─────────────────────────────────────────────────
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s=>{
+    s.classList.remove('active');
+  });
+  document.getElementById(id).classList.add('active');
+  // Scroll to top of the screen
+  document.getElementById(id).scrollTop = 0;
+}
+
+// ── INTRO → START ─────────────────────────────────────────────────────
+function beginMapping() {
+  tasteIdx = 0;
+  renderTaste(0);
+  showScreen('screen-taste');
+}
+
+// ── TASTE SCREEN ──────────────────────────────────────────────────────
+function renderTaste(idx) {
+  const t = TASTES[idx];
+
+  // Update step dots (5 taste + texture + heat = 7 total)
+  const dotsEl = document.getElementById('step-dots-taste');
+  dotsEl.innerHTML = TASTES.map((_,i)=>{
+    let c = 'dot';
+    if (i < idx) c += ' done';
+    else if (i === idx) c += ' active';
+    return `<div class="${c}"></div>`;
+  }).join('') + `<div class="dot"></div><div class="dot"></div>`;
+
+  // Progress bar
+  const pct = (idx / TASTES.length) * 88;
+  document.getElementById('taste-progress').style.width = pct + '%';
+  document.getElementById('taste-step-lbl').textContent = `${idx+1} / ${TASTES.length}`;
+
+  // Hero block
+  document.getElementById('taste-emoji').textContent = t.emoji;
+  document.getElementById('taste-name-lbl').textContent = t.subtitle;
+  document.getElementById('taste-h2').textContent = t.name;
+  document.getElementById('taste-question').textContent = t.question;
+  document.getElementById('taste-hero').style.borderTopColor = t.color;
+
+  // CSS custom property for selected button colour
+  document.documentElement.style.setProperty('--current-taste-color', t.color);
+
+  // Food tiles
+  document.getElementById('food-row').innerHTML = t.foods.map(f=>`
+    <div class="food-tile">
+      <span class="food-icon">${f.icon}</span>
+      <div class="food-name">${f.name}</div>
+      <div class="food-note">${f.note}</div>
+    </div>`).join('');
+
+  // Reset buttons
+  document.querySelectorAll('.ibtn').forEach(b=>b.classList.remove('selected'));
+  picking = false;
+}
+
+async function pickIntensity(val, btn) {
+  if (picking) return;
+  picking = true;
+
+  // Highlight selected
+  document.querySelectorAll('.ibtn').forEach(b=>b.classList.remove('selected'));
+  btn.classList.add('selected');
+
+  // Store
+  scores[TASTES[tasteIdx].key] = val;
+
+  // Wait, then advance
+  await sleep(420);
+  advanceTaste();
+}
+
+async function advanceTaste() {
+  const content = document.getElementById('taste-content');
+  content.style.opacity = '0';
+  await sleep(200);
+
+  tasteIdx++;
+  if (tasteIdx >= TASTES.length) {
+    showScreen('screen-texture');
+    content.style.opacity = '1'; // reset for next use
+  } else {
+    renderTaste(tasteIdx);
+    content.style.opacity = '1';
+    picking = false;
+  }
+}
+
+// ── TEXTURE ───────────────────────────────────────────────────────────
+function pickTexture(val, el) {
+  texture = val;
+  document.querySelectorAll('.texture-card').forEach(c=>c.classList.remove('selected'));
+  el.classList.add('selected');
+  setTimeout(()=>showScreen('screen-heat'), 380);
+}
+
+// ── HEAT ──────────────────────────────────────────────────────────────
+function updateHeat(v) {
+  heat = parseInt(v);
+  document.getElementById('heat-emoji').textContent = HEAT_EMOJIS[heat];
+  document.getElementById('heat-desc').textContent  = HEAT_DESCS[heat];
+}
+
+// ── REVEAL ────────────────────────────────────────────────────────────
+function goReveal() {
+  showScreen('screen-reveal');
+  animateReveal();
+}
+
+function scoreToOpacity(v) {
+  return v == null ? 0 : [0, 0.35, 0.65, 0.92][v];
+}
+
+function animateReveal() {
+  // 1. Fill tongue zones sequentially
+  const ZONE_SCHEDULE = [
+    { id:'rz-umami',   key:'umami',  delay:150  },
+    { id:'rz-sweet',   key:'sweet',  delay:450  },
+    { id:'rz-salty-l', key:'salty',  delay:700  },
+    { id:'rz-salty-r', key:'salty',  delay:700  },
+    { id:'rz-sour-l',  key:'sour',   delay:950  },
+    { id:'rz-sour-r',  key:'sour',   delay:950  },
+    { id:'rz-bitter',  key:'bitter', delay:1200 },
+  ];
+  ZONE_SCHEDULE.forEach(z=>{
+    setTimeout(()=>{
+      const el = document.getElementById(z.id);
+      if (el) el.style.opacity = scoreToOpacity(scores[z.key]);
+    }, z.delay);
+  });
+
+  // 2. Archetype
+  setTimeout(()=>{
+    const arch = pickArchetype();
+    document.getElementById('arch-emoji').textContent = arch.emoji;
+    document.getElementById('arch-name').textContent  = arch.name;
+    document.getElementById('arch-desc').textContent  = arch.desc;
+    document.getElementById('arch-match').textContent = '🌺 ' + arch.match;
+    document.getElementById('archetype-card').style.opacity = '1';
+  }, 1500);
+
+  // 3. K-TID code + bar chart
+  setTimeout(()=>{
+    buildKTID();
+    document.getElementById('ktid-box').style.opacity = '1';
+  }, 2050);
+
+  // 4. CTA
+  setTimeout(()=>{
+    document.getElementById('reveal-cta').style.opacity = '1';
+  }, 2600);
+}
+
+function pickArchetype() {
+  const s = { ...scores, heat };
+  for (const a of ARCHETYPES) {
+    if (a.cond(s)) return a;
+  }
+  return ARCHETYPES[ARCHETYPES.length - 1];
+}
+
+function buildKTID() {
+  const U  = scores.umami  ?? 0;
+  const Sw = scores.sweet  ?? 0;
+  const So = scores.sour   ?? 0;
+  const Sa = scores.salty  ?? 0;
+  const B  = scores.bitter ?? 0;
+  const T  = TEX_CODES[texture] || '?';
+  const H  = heat;
+
+  document.getElementById('ktid-str').textContent =
+    `K-TID: U${U}·S${Sw}·So${So}·Sa${Sa}·B${B}·T:${T}·H${H}`;
+
+  const bars = [
+    { key:'umami',  label:'Umami',  color:'#7c3aed', score:U  },
+    { key:'sweet',  label:'Sweet',  color:'#e8527a', score:Sw },
+    { key:'sour',   label:'Sour',   color:'#7ab510', score:So },
+    { key:'salty',  label:'Salty',  color:'#2e7fd4', score:Sa },
+    { key:'bitter', label:'Bitter', color:'#3d7a4a', score:B  },
+  ];
+
+  const barsEl = document.getElementById('ktid-bars');
+  barsEl.innerHTML = bars.map(b=>`
+    <div class="kbar-wrap">
+      <div class="kbar-track">
+        <div class="kbar-fill" id="bar-${b.key}" style="background:${b.color};height:0%"></div>
+      </div>
+      <div class="kbar-lbl">${b.label}</div>
+    </div>`).join('');
+
+  // Animate bars up
+  setTimeout(()=>{
+    bars.forEach(b=>{
+      const pct = Math.round((b.score/3)*100);
+      document.getElementById(`bar-${b.key}`).style.height = pct + '%';
+    });
+  }, 80);
+}
+
+// ── RECOMMENDATIONS ──────────────────────────────────────────────────
+function findRestaurants() {
+  // Map dominant flavor → existing TasteID fields for /recommend
+  const dominant = Object.entries(scores).sort((a,b)=>(b[1]??0)-(a[1]??0))[0][0];
+
+  const CUISINE_MAP = {
+    umami:  'japanese_pacific',
+    sweet:  'comfort_casual',
+    sour:   'world_cuisine',
+    salty:  'local_hawaiian',
+    bitter: 'modern_fusion',
+  };
+  const ATM_MAP = { 0:'cozy_local', 1:'beach_outdoor', 2:'lively_social', 3:'scenic_unique' };
+
+  const payload = {
+    dietary:      'no_restrictions',
+    occasion:     heat >= 2 ? 'adventurous' : 'friends_group',
+    cuisine:      CUISINE_MAP[dominant] || 'local_hawaiian',
+    atmosphere:   ATM_MAP[heat] || 'beach_outdoor',
+    budget:       2,
+    noise_pref:   heat >= 2 ? 3 : 2,
+    island:       'any',
+    current_time: new Date().getHours(),
+  };
+
+  const ktid = {
+    tasteScores: scores,
+    texture,
+    heat,
+    archetype: document.getElementById('arch-name').textContent,
+  };
+
+  sessionStorage.setItem('ktid_v6',    JSON.stringify(ktid));
+  sessionStorage.setItem('tastePayload', JSON.stringify(payload));
+  window.location.href = '/?from=v6&payload=' + encodeURIComponent(JSON.stringify(payload));
+}
+
+// ── SHARE ─────────────────────────────────────────────────────────────
+function shareKTID() {
+  const code = document.getElementById('ktid-str').textContent;
+  const arch = document.getElementById('arch-name').textContent;
+  const text = `${arch}\n${code}\n\nDiscover yours at kaana.app 🌺`;
+
+  if (navigator.share) {
+    navigator.share({ title:"My Kaʻana Taste ID", text });
+  } else if (navigator.clipboard) {
+    navigator.clipboard.writeText(text).then(()=>alert('K-TID copied! 🌺'));
+  } else {
+    alert(text);
+  }
+}
+
+// ── UTILS ─────────────────────────────────────────────────────────────
+function sleep(ms) { return new Promise(r=>setTimeout(r,ms)); }
+</script>
+</body>
+</html>
