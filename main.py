@@ -110,3 +110,7 @@ async def serve_onboarding_v5():
 @app.get("/onboarding_v6.html")
 async def serve_onboarding_v6():
     return FileResponse("static/onboarding_v6.html")
+
+@app.get("/onboarding_v7.html")
+async def serve_onboarding_v7():
+    return FileResponse("static/onboarding_v7.html")

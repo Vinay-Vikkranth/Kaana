@@ -1,0 +1,1199 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+  <title>Kaʻana — Market Scroll</title>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700;900&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg:     #ede8de;
+      --text:   #1a1510;
+      --border: #1a1510;
+      --shadow: 4px 4px 0 #1a1510;
+      --accent: #b8705a;
+      --muted:  #6a5a4a;
+      --want:   #1fa854;
+      --pass:   #d63a2a;
+      --love:   #e8527a;
+      --umami:  #7c3aed;
+      --sweet:  #e8527a;
+      --sour:   #7ab510;
+      --salty:  #2e7fd4;
+      --bitter: #3d7a4a;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html, body {
+      height: 100%;
+      overflow: hidden;
+      background: var(--bg);
+      font-family: 'DM Sans', system-ui, sans-serif;
+      color: var(--text);
+      touch-action: none;
+    }
+
+    /* ── SCREENS ─────────────────────────────────────────────────── */
+    .screen {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.3s ease;
+      overflow: hidden;
+    }
+    .screen.active { opacity: 1; pointer-events: auto; }
+
+    .kaana-logo {
+      font-size: 11px;
+      font-weight: 900;
+      letter-spacing: 0.28em;
+      text-transform: uppercase;
+      color: var(--accent);
+    }
+
+    /* ── INTRO ───────────────────────────────────────────────────── */
+    #screen-intro {
+      justify-content: center;
+      align-items: center;
+      gap: 0;
+      padding: 32px 28px;
+      text-align: center;
+    }
+
+    .intro-logo { margin-bottom: 36px; }
+
+    .intro-title {
+      font-size: clamp(2.8rem, 12vw, 5rem);
+      font-weight: 900;
+      text-transform: uppercase;
+      line-height: 0.95;
+      letter-spacing: -0.03em;
+      margin-bottom: 16px;
+    }
+
+    .intro-sub {
+      font-size: 15px;
+      color: var(--muted);
+      font-weight: 500;
+      margin-bottom: 36px;
+    }
+
+    /* Mini demo card preview */
+    .demo-card {
+      width: 180px;
+      height: 230px;
+      border: 2.5px solid var(--border);
+      box-shadow: 6px 6px 0 var(--border);
+      background: linear-gradient(160deg, #1a0800, #5c2a0a, #b85c1a);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 64px;
+      transform: rotate(-4deg);
+      margin-bottom: 28px;
+      position: relative;
+    }
+    .demo-card::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(to top, rgba(0,0,0,0.5) 0%, transparent 50%);
+    }
+
+    /* Action legend */
+    .action-legend {
+      display: flex;
+      gap: 20px;
+      margin-bottom: 32px;
+      align-items: center;
+    }
+    .legend-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 5px;
+    }
+    .legend-icon {
+      width: 44px;
+      height: 44px;
+      border: 2px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      font-weight: 900;
+      box-shadow: 3px 3px 0 var(--border);
+    }
+    .legend-pass  { background: var(--pass);  color: white; }
+    .legend-love  { background: var(--love);  color: white; }
+    .legend-want  { background: var(--want);  color: white; }
+    .legend-label {
+      font-size: 9px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--muted);
+    }
+    .legend-divider {
+      color: var(--muted);
+      font-size: 18px;
+      font-weight: 300;
+      opacity: 0.4;
+      margin-top: -6px;
+    }
+
+    .btn {
+      display: inline-block;
+      padding: 15px 36px;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 13px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      border: 2.5px solid var(--border);
+      box-shadow: var(--shadow);
+      cursor: pointer;
+      background: var(--text);
+      color: var(--bg);
+      transition: transform 0.1s, box-shadow 0.1s;
+      text-decoration: none;
+    }
+    .btn:active { transform: translate(2px,2px); box-shadow: 2px 2px 0 var(--border); }
+    .btn-ghost { background: var(--bg); color: var(--text); }
+
+    /* ── CARDS SCREEN ────────────────────────────────────────────── */
+    #screen-cards {
+      justify-content: space-between;
+      padding: 16px 20px 20px;
+    }
+
+    .cards-topbar {
+      width: 100%;
+      max-width: 400px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-shrink: 0;
+    }
+    .card-counter {
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      color: var(--muted);
+    }
+
+    /* Progress dots */
+    .card-dots {
+      display: flex;
+      gap: 5px;
+    }
+    .cdot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: rgba(26,21,16,0.18);
+      transition: background 0.3s;
+    }
+    .cdot.done  { background: var(--accent); }
+    .cdot.active{ background: var(--text); transform: scale(1.3); }
+
+    /* The card stack area */
+    .stack-area {
+      position: relative;
+      width: 100%;
+      max-width: 400px;
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .card-stack {
+      position: relative;
+      width: 100%;
+      /* height set by JS based on viewport */
+      height: min(460px, 58vh);
+    }
+
+    /* Individual dish card */
+    .dish-card {
+      position: absolute;
+      inset: 0;
+      border: 2.5px solid var(--border);
+      overflow: hidden;
+      cursor: grab;
+      user-select: none;
+      will-change: transform;
+    }
+    .dish-card:active { cursor: grabbing; }
+
+    /* Stack depth positions */
+    .dish-card.pos-top  {
+      transform: scale(1) translateY(0px);
+      box-shadow: 8px 8px 0 var(--border);
+      z-index: 3;
+    }
+    .dish-card.pos-mid  {
+      transform: scale(0.955) translateY(14px);
+      box-shadow: 5px 5px 0 var(--border);
+      z-index: 2;
+      pointer-events: none;
+    }
+    .dish-card.pos-back {
+      transform: scale(0.91) translateY(28px);
+      box-shadow: 3px 3px 0 var(--border);
+      z-index: 1;
+      pointer-events: none;
+    }
+    .dish-card.pos-gone { z-index: 0; display: none; }
+
+    /* Card background */
+    .card-bg {
+      position: absolute;
+      inset: 0;
+      transition: background 0.1s;
+    }
+
+    /* WANT / PASS overlays — appear during drag */
+    .drag-badge {
+      position: absolute;
+      top: 20px;
+      padding: 8px 16px;
+      font-size: 16px;
+      font-weight: 900;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      border: 3px solid white;
+      color: white;
+      opacity: 0;
+      transform: rotate(-15deg);
+      pointer-events: none;
+      z-index: 10;
+    }
+    .badge-want { right: 20px; color: var(--want); border-color: var(--want); transform: rotate(12deg); }
+    .badge-pass { left: 20px;  color: var(--pass); border-color: var(--pass); transform: rotate(-12deg); }
+
+    /* Card content */
+    .card-content {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-end;
+      padding: 20px 20px 24px;
+      background: linear-gradient(to top, rgba(0,0,0,0.75) 0%, rgba(0,0,0,0.2) 40%, transparent 70%);
+    }
+    .card-emoji {
+      font-size: clamp(64px, 16vw, 96px);
+      line-height: 1;
+      margin-bottom: 14px;
+      filter: drop-shadow(0 4px 12px rgba(0,0,0,0.4));
+    }
+    .card-name {
+      font-size: clamp(22px, 6vw, 30px);
+      font-weight: 900;
+      text-transform: uppercase;
+      letter-spacing: -0.01em;
+      color: white;
+      text-shadow: 0 2px 8px rgba(0,0,0,0.5);
+      text-align: center;
+      line-height: 1.1;
+      margin-bottom: 12px;
+    }
+    /* Flavor chips */
+    .card-chips {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+    .chip {
+      font-size: 9px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      padding: 3px 8px;
+      border: 1.5px solid rgba(255,255,255,0.6);
+      color: rgba(255,255,255,0.9);
+    }
+
+    /* Heart burst particles */
+    .heart-particle {
+      position: fixed;
+      font-size: 24px;
+      pointer-events: none;
+      z-index: 999;
+      animation: heartFly 0.8s ease-out forwards;
+    }
+    @keyframes heartFly {
+      0%   { transform: translate(0,0) scale(1);   opacity: 1; }
+      100% { transform: translate(var(--tx), var(--ty)) scale(0.3); opacity: 0; }
+    }
+
+    /* ── BOTTOM ACTION BAR ───────────────────────────────────────── */
+    .action-bar {
+      display: flex;
+      gap: 16px;
+      align-items: center;
+      justify-content: center;
+      padding: 4px 0 0;
+      flex-shrink: 0;
+      width: 100%;
+      max-width: 400px;
+    }
+    .action-btn {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      cursor: pointer;
+      border: none;
+      background: none;
+      padding: 0;
+      font-family: 'DM Sans', sans-serif;
+    }
+    .action-circle {
+      width: 56px;
+      height: 56px;
+      border: 2.5px solid var(--border);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 22px;
+      box-shadow: 3px 3px 0 var(--border);
+      transition: transform 0.1s, box-shadow 0.1s;
+      background: var(--bg);
+    }
+    .action-btn:active .action-circle {
+      transform: translate(2px,2px);
+      box-shadow: 1px 1px 0 var(--border);
+    }
+    .action-circle.pass-circle { background: var(--pass); }
+    .action-circle.love-circle  { background: var(--love); width:68px; height:68px; font-size:28px; box-shadow: 4px 4px 0 var(--border); }
+    .action-circle.want-circle  { background: var(--want); }
+    .action-lbl {
+      font-size: 9px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--muted);
+    }
+
+    /* Swipe hint — shows briefly on first card */
+    .swipe-hint {
+      position: absolute;
+      bottom: 50%;
+      left: 50%;
+      transform: translate(-50%, 50%);
+      display: flex;
+      gap: 24px;
+      align-items: center;
+      pointer-events: none;
+      z-index: 20;
+      opacity: 0;
+      transition: opacity 0.3s;
+    }
+    .swipe-hint.visible { opacity: 1; }
+    .hint-arrow {
+      font-size: 13px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: rgba(255,255,255,0.85);
+      text-shadow: 0 1px 4px rgba(0,0,0,0.5);
+    }
+    @keyframes hintPulse {
+      0%,100% { opacity: 0.6; } 50% { opacity: 1; }
+    }
+    .swipe-hint.visible { animation: hintPulse 1.5s ease-in-out infinite; }
+
+    /* ── REVEAL SCREEN ───────────────────────────────────────────── */
+    #screen-reveal {
+      padding: 20px 20px 28px;
+      gap: 14px;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+      justify-content: flex-start;
+      align-items: center;
+    }
+
+    .tag-pill {
+      display: inline-block;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      border: 2px solid var(--border);
+      padding: 3px 10px;
+    }
+
+    /* Behavioral insight banner */
+    .insight-banner {
+      width: 100%;
+      max-width: 400px;
+      border: 2.5px solid var(--border);
+      box-shadow: var(--shadow);
+      padding: 14px 16px;
+      background: var(--text);
+      color: var(--bg);
+      display: flex;
+      gap: 12px;
+      align-items: flex-start;
+      opacity: 0;
+      transition: opacity 0.5s ease;
+    }
+    .insight-icon { font-size: 20px; flex-shrink: 0; margin-top: 1px; }
+    .insight-text { font-size: 13px; line-height: 1.5; }
+    .insight-text strong { font-weight: 900; color: var(--accent); }
+
+    /* Archetype */
+    .archetype-card {
+      width: 100%;
+      max-width: 400px;
+      border: 2.5px solid var(--border);
+      box-shadow: var(--shadow);
+      padding: 20px;
+      background: white;
+      text-align: center;
+      opacity: 0;
+      transition: opacity 0.5s ease;
+    }
+    .arch-emoji { font-size: 40px; display: block; margin-bottom: 8px; }
+    .arch-kicker { font-size: 9px; font-weight:700; letter-spacing:0.2em; text-transform:uppercase; color:var(--accent); margin-bottom:4px; }
+    .arch-name { font-size: 22px; font-weight:900; text-transform:uppercase; letter-spacing:-0.01em; }
+    .arch-desc { font-size:13px; color:var(--muted); margin-top:8px; line-height:1.6; }
+    .arch-match { font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:0.08em; color:var(--accent); margin-top:10px; }
+
+    /* K-TID */
+    .ktid-box {
+      width: 100%;
+      max-width: 400px;
+      border: 2.5px solid var(--border);
+      box-shadow: var(--shadow);
+      padding: 14px 16px;
+      opacity: 0;
+      transition: opacity 0.5s ease;
+    }
+    .ktid-lbl { font-size:9px; font-weight:700; letter-spacing:0.2em; text-transform:uppercase; color:var(--muted); margin-bottom:6px; }
+    .ktid-code { font-family:'Courier New',monospace; font-size:15px; font-weight:900; word-break:break-all; margin-bottom:14px; }
+
+    /* Bar chart */
+    .bars-row { display:flex; gap:8px; align-items:flex-end; height:60px; }
+    .bar-col { flex:1; display:flex; flex-direction:column; align-items:center; gap:4px; }
+    .bar-track { width:100%; height:56px; background:rgba(26,21,16,0.1); border:1.5px solid rgba(26,21,16,0.18); border-radius:2px; overflow:hidden; display:flex; align-items:flex-end; }
+    .bar-fill { width:100%; border-radius:2px 2px 0 0; transition:height 1.1s cubic-bezier(0.34,1.56,0.64,1); height:0%; }
+    .bar-lbl { font-size:8px; font-weight:700; letter-spacing:0.04em; text-transform:uppercase; color:var(--muted); }
+
+    /* Speed breakdown */
+    .speed-row {
+      display: flex;
+      gap: 6px;
+      width: 100%;
+      max-width: 400px;
+      opacity: 0;
+      transition: opacity 0.5s ease;
+    }
+    .speed-tile {
+      flex: 1;
+      border: 2px solid var(--border);
+      padding: 10px 6px;
+      text-align: center;
+      background: var(--bg);
+    }
+    .speed-time { font-size: 16px; font-weight: 900; line-height: 1; margin-bottom: 3px; }
+    .speed-name { font-size: 8px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); }
+
+    /* CTA */
+    .reveal-cta {
+      width:100%;
+      max-width:400px;
+      display:flex;
+      flex-direction:column;
+      gap:10px;
+      opacity:0;
+      transition: opacity 0.5s ease;
+    }
+    .reveal-cta .btn { text-align:center; width:100%; }
+    .back-link { text-align:center; font-size:12px; color:var(--muted); text-decoration:none; margin-top:2px; }
+  </style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════════════════════════
+     SCREEN 1 — INTRO
+═══════════════════════════════════════════════════════════ -->
+<div id="screen-intro" class="screen active">
+  <div class="intro-logo kaana-logo">Kaʻana</div>
+
+  <h1 class="intro-title">The<br/>Market<br/>Scroll.</h1>
+  <p class="intro-sub">React to 12 dishes. Your gut knows.</p>
+
+  <div class="demo-card">🍜</div>
+
+  <div class="action-legend">
+    <div class="legend-item">
+      <div class="legend-icon legend-pass">✕</div>
+      <span class="legend-label">Pass</span>
+    </div>
+    <div class="legend-divider">|</div>
+    <div class="legend-item">
+      <div class="legend-icon legend-love">♥</div>
+      <span class="legend-label">Love it</span>
+    </div>
+    <div class="legend-divider">|</div>
+    <div class="legend-item">
+      <div class="legend-icon legend-want">✓</div>
+      <span class="legend-label">Want it</span>
+    </div>
+  </div>
+
+  <button class="btn" onclick="startScroll()" style="min-width:200px;">Start Scrolling →</button>
+  <a href="/selector.html" style="font-size:12px;color:var(--muted);text-decoration:none;margin-top:12px;">← All versions</a>
+</div>
+
+
+<!-- ═══════════════════════════════════════════════════════════
+     SCREEN 2 — CARDS
+═══════════════════════════════════════════════════════════ -->
+<div id="screen-cards" class="screen">
+
+  <div class="cards-topbar">
+    <div class="kaana-logo">Kaʻana</div>
+    <div class="card-dots" id="card-dots"></div>
+    <div class="card-counter" id="card-counter">1 / 12</div>
+  </div>
+
+  <div class="stack-area">
+    <div class="card-stack" id="card-stack">
+
+      <!-- Three recycled card elements -->
+      <div class="dish-card pos-back" id="card-c">
+        <div class="card-bg"></div>
+        <div class="drag-badge badge-want">WANT ✓</div>
+        <div class="drag-badge badge-pass">✕ PASS</div>
+        <div class="card-content">
+          <div class="card-emoji"></div>
+          <div class="card-name"></div>
+          <div class="card-chips"></div>
+        </div>
+      </div>
+
+      <div class="dish-card pos-mid" id="card-b">
+        <div class="card-bg"></div>
+        <div class="drag-badge badge-want">WANT ✓</div>
+        <div class="drag-badge badge-pass">✕ PASS</div>
+        <div class="card-content">
+          <div class="card-emoji"></div>
+          <div class="card-name"></div>
+          <div class="card-chips"></div>
+        </div>
+      </div>
+
+      <div class="dish-card pos-top" id="card-a">
+        <div class="card-bg"></div>
+        <div class="drag-badge badge-want">WANT ✓</div>
+        <div class="drag-badge badge-pass">✕ PASS</div>
+        <div class="card-content">
+          <div class="card-emoji"></div>
+          <div class="card-name"></div>
+          <div class="card-chips"></div>
+        </div>
+      </div>
+
+      <!-- Swipe hint (first card only) -->
+      <div class="swipe-hint" id="swipe-hint">
+        <span class="hint-arrow">← pass</span>
+        <span class="hint-arrow">want →</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Action bar -->
+  <div class="action-bar">
+    <button class="action-btn" onclick="doAction('pass')">
+      <div class="action-circle pass-circle" style="color:white;">✕</div>
+      <span class="action-lbl">Pass</span>
+    </button>
+    <button class="action-btn" onclick="doAction('love')">
+      <div class="action-circle love-circle" style="color:white;">♥</div>
+      <span class="action-lbl">Love it</span>
+    </button>
+    <button class="action-btn" onclick="doAction('want')">
+      <div class="action-circle want-circle" style="color:white;">✓</div>
+      <span class="action-lbl">Want it</span>
+    </button>
+  </div>
+</div>
+
+
+<!-- ═══════════════════════════════════════════════════════════
+     SCREEN 3 — REVEAL
+═══════════════════════════════════════════════════════════ -->
+<div id="screen-reveal" class="screen">
+  <div class="kaana-logo" style="margin-bottom:4px;">Kaʻana</div>
+  <div class="tag-pill">Your Flavor Profile</div>
+
+  <!-- Behavioral insight -->
+  <div class="insight-banner" id="insight-banner">
+    <span class="insight-icon">⚡</span>
+    <span class="insight-text" id="insight-text">Loading insight...</span>
+  </div>
+
+  <!-- Archetype -->
+  <div class="archetype-card" id="archetype-card">
+    <span class="arch-emoji" id="arch-emoji">🍜</span>
+    <div class="arch-kicker">Your Taste Archetype</div>
+    <div class="arch-name" id="arch-name">—</div>
+    <div class="arch-desc" id="arch-desc">—</div>
+    <div class="arch-match" id="arch-match">—</div>
+  </div>
+
+  <!-- K-TID -->
+  <div class="ktid-box" id="ktid-box">
+    <div class="ktid-lbl">K-TID Flavor Code</div>
+    <div class="ktid-code" id="ktid-code">—</div>
+    <div class="bars-row" id="bars-row"><!-- filled by JS --></div>
+  </div>
+
+  <!-- Reaction speed per taste -->
+  <div class="speed-row" id="speed-row"><!-- filled by JS --></div>
+
+  <!-- CTA -->
+  <div class="reveal-cta" id="reveal-cta">
+    <button class="btn" onclick="findRestaurants()">Find My Restaurants →</button>
+    <button class="btn btn-ghost" onclick="shareProfile()">Share My K-TID</button>
+    <a href="/selector.html" class="back-link">Try another version</a>
+  </div>
+</div>
+
+
+<!-- ═══════════════════════════════════════════════════════════
+     JAVASCRIPT
+═══════════════════════════════════════════════════════════ -->
+<script>
+// ── DISH DATA ────────────────────────────────────────────────────────
+const DISHES = [
+  {
+    name:'Miso Ramen', emoji:'🍜',
+    bg:'linear-gradient(160deg,#1a0800 0%,#5c2a0a 55%,#c4762a 100%)',
+    chips:['Umami','Savory'],
+    signals:{ umami:1.0, salty:0.5, bitter:0.2, sweet:0.1, sour:0.1 }, heat:0.2
+  },
+  {
+    name:'Malasadas', emoji:'🍩',
+    bg:'linear-gradient(160deg,#5c0a1a 0%,#b83050 50%,#eda070 100%)',
+    chips:['Sweet','Warm'],
+    signals:{ sweet:1.0, salty:0.2, umami:0.1, bitter:0.0, sour:0.1 }, heat:0.0
+  },
+  {
+    name:'Spicy Tuna Poke', emoji:'🐟',
+    bg:'linear-gradient(160deg,#0a142a 0%,#1a3a6a 55%,#3a70c0 100%)',
+    chips:['Salty','Umami','Heat'],
+    signals:{ salty:0.8, umami:0.7, sour:0.3, sweet:0.1, bitter:0.1 }, heat:0.9
+  },
+  {
+    name:'Lilikoi Tart', emoji:'🍋',
+    bg:'linear-gradient(160deg,#2a2a00 0%,#7a7200 55%,#d4c010 100%)',
+    chips:['Sour','Tangy'],
+    signals:{ sour:1.0, sweet:0.4, bitter:0.2, umami:0.0, salty:0.1 }, heat:0.0
+  },
+  {
+    name:'Kalua Pig', emoji:'🐷',
+    bg:'linear-gradient(160deg,#150800 0%,#3a1808 55%,#7a3c18 100%)',
+    chips:['Salty','Umami','Smoky'],
+    signals:{ salty:0.9, umami:0.8, sweet:0.2, bitter:0.1, sour:0.0 }, heat:0.1
+  },
+  {
+    name:'Acai Bowl', emoji:'🫐',
+    bg:'linear-gradient(160deg,#140028 0%,#3a0860 55%,#7c28b0 100%)',
+    chips:['Sweet','Sour'],
+    signals:{ sweet:0.7, sour:0.5, bitter:0.3, umami:0.0, salty:0.1 }, heat:0.0
+  },
+  {
+    name:'Kona Dark Coffee', emoji:'☕',
+    bg:'linear-gradient(160deg,#080400 0%,#200e02 55%,#503010 100%)',
+    chips:['Bitter','Bold'],
+    signals:{ bitter:1.0, umami:0.3, sweet:0.0, salty:0.1, sour:0.3 }, heat:0.0
+  },
+  {
+    name:'Garlic Shrimp', emoji:'🦐',
+    bg:'linear-gradient(160deg,#1a0e00 0%,#6a3c00 55%,#c88010 100%)',
+    chips:['Salty','Umami'],
+    signals:{ salty:0.9, umami:0.7, sweet:0.2, bitter:0.1, sour:0.1 }, heat:0.3
+  },
+  {
+    name:'Haupia', emoji:'🥥',
+    bg:'linear-gradient(160deg,#1a1408 0%,#5a4820 55%,#b09060 100%)',
+    chips:['Sweet','Creamy'],
+    signals:{ sweet:0.9, salty:0.2, umami:0.1, bitter:0.0, sour:0.0 }, heat:0.0
+  },
+  {
+    name:'Papaya Salad', emoji:'🌿',
+    bg:'linear-gradient(160deg,#081400 0%,#204a08 55%,#408a18 100%)',
+    chips:['Sour','Salty','Heat'],
+    signals:{ sour:0.8, salty:0.6, bitter:0.2, sweet:0.2, umami:0.1 }, heat:0.6
+  },
+  {
+    name:'Loco Moco', emoji:'🍳',
+    bg:'linear-gradient(160deg,#100800 0%,#3a1c06 55%,#7a4010 100%)',
+    chips:['Umami','Salty'],
+    signals:{ umami:0.9, salty:0.7, sweet:0.2, bitter:0.1, sour:0.0 }, heat:0.1
+  },
+  {
+    name:'Dark Choc Haupia', emoji:'🍫',
+    bg:'linear-gradient(160deg,#080400 0%,#180a06 55%,#381408 100%)',
+    chips:['Bitter','Sweet'],
+    signals:{ bitter:0.8, sweet:0.5, umami:0.2, salty:0.1, sour:0.1 }, heat:0.0
+  },
+];
+
+const TASTE_COLORS = {
+  umami:'#7c3aed', sweet:'#e8527a', sour:'#7ab510', salty:'#2e7fd4', bitter:'#3d7a4a'
+};
+const TASTE_LABELS = {
+  umami:'Umami', sweet:'Sweet', sour:'Sour', salty:'Salty', bitter:'Bitter'
+};
+
+const ARCHETYPES = [
+  {
+    name:'The Umami Hunter', emoji:'🍜',
+    cond:s=>s.umami>=2&&s.umami>=s.sweet&&s.umami>=s.sour&&s.umami>=s.bitter,
+    desc:'You live for depth and savoriness. Rich broths, miso glazes, and fermented complexity are your comfort zone.',
+    match:'Misoyaki butterfish · Shoyu poke · Miso ramen'
+  },
+  {
+    name:'The Sweet Soul', emoji:'🍯',
+    cond:s=>s.sweet>=2&&s.sweet>=s.umami&&s.sweet>s.bitter,
+    desc:'Tropical fruits, warm desserts, caramel — you gravitate toward the comforting and indulgent.',
+    match:'Malasadas · Acai bowls · Haupia pie'
+  },
+  {
+    name:'The Bright & Tangy', emoji:'🍋',
+    cond:s=>s.sour>=2&&s.sour>=s.sweet&&s.sour>=s.bitter,
+    desc:'You love brightness and lift. Citrus, passion fruit, tang — flavors that make everything pop.',
+    match:'Lilikoi desserts · Ceviche poke · Yuzu'
+  },
+  {
+    name:'The Connoisseur', emoji:'☕',
+    cond:s=>s.bitter>=2&&s.umami>=1,
+    desc:"You've graduated beyond the obvious. Coffee, dark chocolate, complex bitterness — your standard.",
+    match:'Kona dark roast · Farm-to-table · Craft cocktails'
+  },
+  {
+    name:'The Bold Taster', emoji:'🌶️',
+    cond:s=>s.heat>=2&&(s.sour>=2||s.salty>=2),
+    desc:'Intensity is your language. Heat, tang, edge — flavors that demand attention.',
+    match:'Spicy ahi poke · Thai boat noodles · Kimchi'
+  },
+  {
+    name:'The Savory Classic', emoji:'🧂',
+    cond:s=>s.salty>=2&&s.sweet<=1,
+    desc:'Crisp, seasoned, deeply satisfying. Well-salted, hearty, comforting — no nonsense.',
+    match:'Plate lunch · Kalua pig · Saimin'
+  },
+  {
+    name:'The Full Palate', emoji:'🌈',
+    cond:s=>{
+      const v=[s.sweet,s.salty,s.sour,s.bitter,s.umami];
+      return v.reduce((a,b)=>a+b,0)/5>=1.5&&(Math.max(...v)-Math.min(...v))<=1;
+    },
+    desc:'Nothing escapes you. Balanced, curious, genuinely open to the whole table.',
+    match:'Any island · Any cuisine · The whole experience'
+  },
+  {
+    name:'The Gentle Palate', emoji:'🌸',
+    cond:()=>true,
+    desc:'Clean, delicate flavors. Light and fresh over intense — nourishing, never overwhelming.',
+    match:'Fresh sashimi · Light salads · Coconut dishes'
+  },
+];
+
+// ── STATE ─────────────────────────────────────────────────────────────
+let currentIdx   = 0;   // which dish is on top
+let cardAppearTs = 0;   // timestamp when top card became active
+let processing   = false;
+
+// Scoring accumulators
+const dimSums    = { umami:0, sweet:0, sour:0, salty:0, bitter:0 };
+const dimWeights = { umami:0, sweet:0, sour:0, salty:0, bitter:0 };
+const rtByDim    = { umami:[], sweet:[], sour:[], salty:[], bitter:[] }; // reaction times
+let heatSum=0, heatWeight=0;
+
+// DOM refs
+let cardPool;   // [top, mid, back] — DOM elements
+let poolIdx=0;  // which of the 3 elements is currently 'top'
+
+// Touch tracking
+let touchStartX=0, touchStartY=0, touchActive=false, currentDX=0;
+
+// ── SCREEN MANAGEMENT ─────────────────────────────────────────────────
+function showScreen(id){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+// ── START ─────────────────────────────────────────────────────────────
+function startScroll(){
+  // Build card pool
+  cardPool = [
+    document.getElementById('card-a'),
+    document.getElementById('card-b'),
+    document.getElementById('card-c'),
+  ];
+  // Seed first 3 cards
+  fillCard(cardPool[0], 0);
+  fillCard(cardPool[1], 1);
+  fillCard(cardPool[2], 2);
+
+  buildDots();
+  showScreen('screen-cards');
+  cardAppearTs = Date.now();
+
+  // Attach swipe listeners to top card
+  attachDragListeners(cardPool[0]);
+
+  // Show swipe hint briefly
+  const hint = document.getElementById('swipe-hint');
+  hint.classList.add('visible');
+  setTimeout(()=>hint.classList.remove('visible'), 2200);
+}
+
+// ── FILL CARD CONTENT ─────────────────────────────────────────────────
+function fillCard(el, dishIdx){
+  if(dishIdx >= DISHES.length){ el.style.display='none'; return; }
+  el.style.display='';
+  const d = DISHES[dishIdx];
+  el.querySelector('.card-bg').style.background = d.bg;
+  el.querySelector('.card-emoji').textContent = d.emoji;
+  el.querySelector('.card-name').textContent  = d.name;
+  el.querySelector('.card-chips').innerHTML   = d.chips.map(c=>
+    `<span class="chip">${c}</span>`).join('');
+  // Reset drag state
+  el.style.transition='';
+  el.style.transform='';
+  el.style.opacity='1';
+  el.querySelector('.badge-want').style.opacity='0';
+  el.querySelector('.badge-pass').style.opacity='0';
+}
+
+// ── DRAG LISTENERS ────────────────────────────────────────────────────
+function attachDragListeners(el){
+  // Touch
+  el.addEventListener('touchstart', onDragStart, {passive:true});
+  el.addEventListener('touchmove',  onDragMove,  {passive:false});
+  el.addEventListener('touchend',   onDragEnd,   {passive:true});
+  // Mouse
+  el.addEventListener('mousedown',  onMouseDown);
+}
+
+function removeDragListeners(el){
+  el.removeEventListener('touchstart', onDragStart);
+  el.removeEventListener('touchmove',  onDragMove);
+  el.removeEventListener('touchend',   onDragEnd);
+  el.removeEventListener('mousedown',  onMouseDown);
+}
+
+function onDragStart(e){
+  if(processing) return;
+  const src = e.touches ? e.touches[0] : e;
+  touchStartX = src.clientX;
+  touchStartY = src.clientY;
+  touchActive = true;
+  currentDX   = 0;
+  getTopCard().style.transition = 'none';
+}
+
+function onDragMove(e){
+  if(!touchActive || processing) return;
+  if(e.cancelable) e.preventDefault();
+  const src = e.touches ? e.touches[0] : e;
+  const dx  = src.clientX - touchStartX;
+  const dy  = src.clientY - touchStartY;
+  currentDX = dx;
+  const angle = dx * 0.04;
+  const top = getTopCard();
+  top.style.transform = `translateX(${dx}px) translateY(${dy*0.25}px) rotate(${angle}deg)`;
+  top.querySelector('.badge-want').style.opacity = Math.max(0,(dx-30)/70);
+  top.querySelector('.badge-pass').style.opacity = Math.max(0,(-dx-30)/70);
+}
+
+function onDragEnd(){
+  if(!touchActive || processing) return;
+  touchActive = false;
+  const top = getTopCard();
+  top.style.transition = 'transform 0.35s ease, opacity 0.3s ease';
+  if(currentDX > 80)       doAction('want');
+  else if(currentDX < -80) doAction('pass');
+  else {
+    // Snap back
+    top.style.transform = '';
+    top.querySelector('.badge-want').style.opacity='0';
+    top.querySelector('.badge-pass').style.opacity='0';
+  }
+  currentDX = 0;
+}
+
+// Mouse drag passthrough
+function onMouseDown(e){
+  onDragStart(e);
+  const move = (ev)=>{ onDragMove({...ev, touches:[ev], cancelable:false}); };
+  const up   = ()=>{ onDragEnd(); document.removeEventListener('mousemove',move); document.removeEventListener('mouseup',up); };
+  document.addEventListener('mousemove', move);
+  document.addEventListener('mouseup',   up);
+}
+
+// Keyboard support
+document.addEventListener('keydown', e=>{
+  if(!document.getElementById('screen-cards').classList.contains('active')) return;
+  if(processing) return;
+  if(e.key==='ArrowLeft')  doAction('pass');
+  if(e.key==='ArrowRight') doAction('want');
+  if(e.key===' '||e.key==='ArrowUp') doAction('love');
+});
+
+// ── ACTIONS ───────────────────────────────────────────────────────────
+function getTopCard(){ return cardPool[poolIdx % 3]; }
+
+async function doAction(action){
+  if(processing) return;
+  processing = true;
+  document.getElementById('swipe-hint').classList.remove('visible');
+
+  const reactionMs = Date.now() - cardAppearTs;
+  const rt = reactionMs / 1000;
+
+  // Record reaction
+  recordReaction(DISHES[currentIdx], action, rt);
+
+  // Animate card out
+  const top = getTopCard();
+  removeDragListeners(top);
+  top.style.transition = 'transform 0.38s cubic-bezier(0.6,0,0.8,1), opacity 0.3s ease';
+
+  if(action === 'love'){
+    burstHearts(top);
+    top.style.transform = 'translateY(-130%) scale(1.08)';
+    top.style.opacity   = '0';
+  } else if(action === 'want'){
+    top.style.transform = 'translateX(140%) rotate(22deg)';
+    top.style.opacity   = '0';
+  } else {
+    top.style.transform = 'translateX(-140%) rotate(-22deg)';
+    top.style.opacity   = '0';
+  }
+
+  await sleep(320);
+
+  currentIdx++;
+  updateDots();
+  document.getElementById('card-counter').textContent = `${Math.min(currentIdx+1,12)} / 12`;
+
+  if(currentIdx >= DISHES.length){
+    showReveal();
+    return;
+  }
+
+  // Advance pool
+  top.className = 'dish-card pos-gone';
+  poolIdx++;
+  const newTop  = cardPool[poolIdx % 3];
+  const newMid  = cardPool[(poolIdx+1) % 3];
+  const newBack = cardPool[(poolIdx+2) % 3];
+
+  newTop.className  = 'dish-card pos-top';
+  newMid.className  = 'dish-card pos-mid';
+  newBack.className = 'dish-card pos-back';
+
+  fillCard(newBack, currentIdx + 2);
+  fillCard(newTop,  currentIdx);     // ensure fresh state
+  attachDragListeners(newTop);
+
+  cardAppearTs = Date.now();
+  processing   = false;
+}
+
+// ── RECORD REACTION ───────────────────────────────────────────────────
+function recordReaction(dish, action, rt){
+  // Reaction-time weight: faster = more confident
+  const rtW = rt < 0.8 ? 1.5 : rt < 2 ? 1.0 : rt < 4 ? 0.7 : 0.5;
+
+  // Action multiplier
+  const aMult = action==='love' ? 1.0 : action==='want' ? 0.65 : -0.3;
+
+  const dims = Object.keys(dimSums);
+  dims.forEach(dim=>{
+    const sig = dish.signals[dim] || 0;
+    if(sig > 0){
+      dimSums[dim]    += sig * aMult * rtW;
+      dimWeights[dim] += sig * rtW;
+    }
+  });
+
+  // Track fastest reaction per dominant taste
+  const domDim = dims.reduce((a,b)=>(dish.signals[a]||0)>=(dish.signals[b]||0)?a:b);
+  rtByDim[domDim].push(rt);
+
+  // Heat
+  heatSum    += dish.heat * aMult * rtW;
+  heatWeight += dish.heat * rtW;
+}
+
+function computeScores(){
+  const scores = {};
+  Object.keys(dimSums).forEach(dim=>{
+    if(dimWeights[dim] === 0){ scores[dim] = 1; return; }
+    const raw = dimSums[dim] / dimWeights[dim]; // range ~[-0.3, 1.0]
+    scores[dim] = Math.max(0, Math.min(3, Math.round((raw+0.3)/1.3*3)));
+  });
+  scores.heat = heatWeight>0 ? Math.max(0,Math.min(3,Math.round((heatSum/heatWeight+0.3)/1.3*3))) : 0;
+  return scores;
+}
+
+function avgRT(dim){ return rtByDim[dim].length ? rtByDim[dim].reduce((a,b)=>a+b,0)/rtByDim[dim].length : 99; }
+
+// ── REVEAL ────────────────────────────────────────────────────────────
+async function showReveal(){
+  await sleep(200);
+  showScreen('screen-reveal');
+  const scores = computeScores();
+
+  // Behavioral insight — find fastest reacted taste
+  const dims = ['umami','sweet','sour','salty','bitter'];
+  let fastDim='umami', fastTime=99;
+  dims.forEach(d=>{ const t=avgRT(d); if(t<fastTime){fastTime=t;fastDim=d;} });
+  const loveCount = Object.values(dimSums).filter((_,i)=>false).length; // unused
+  const insightEl = document.getElementById('insight-text');
+  insightEl.innerHTML = `Your gut reacted to <strong>${TASTE_LABELS[fastDim]}</strong> dishes in <strong>${fastTime.toFixed(1)}s</strong> on average — your fastest of the five tastes. Fast reactions = strong instinct.`;
+
+  // Fade in insight
+  setTimeout(()=>{ document.getElementById('insight-banner').style.opacity='1'; }, 200);
+
+  // Archetype
+  const arch = pickArchetype(scores);
+  document.getElementById('arch-emoji').textContent = arch.emoji;
+  document.getElementById('arch-name').textContent  = arch.name;
+  document.getElementById('arch-desc').textContent  = arch.desc;
+  document.getElementById('arch-match').textContent = '🌺 '+arch.match;
+  setTimeout(()=>{ document.getElementById('archetype-card').style.opacity='1'; }, 700);
+
+  // K-TID + bars
+  setTimeout(()=>{
+    buildKTID(scores);
+    document.getElementById('ktid-box').style.opacity='1';
+  }, 1200);
+
+  // Speed breakdown
+  setTimeout(()=>{
+    buildSpeedRow();
+    document.getElementById('speed-row').style.opacity='1';
+  }, 1700);
+
+  // CTA
+  setTimeout(()=>{ document.getElementById('reveal-cta').style.opacity='1'; }, 2200);
+}
+
+function pickArchetype(s){
+  for(const a of ARCHETYPES){ if(a.cond(s)) return a; }
+  return ARCHETYPES[ARCHETYPES.length-1];
+}
+
+function buildKTID(s){
+  const code = `K-TID: U${s.umami}·S${s.sweet}·So${s.sour}·Sa${s.salty}·B${s.bitter}·H${s.heat}`;
+  document.getElementById('ktid-code').textContent = code;
+
+  const dims = ['umami','sweet','sour','salty','bitter'];
+  const barsEl = document.getElementById('bars-row');
+  barsEl.innerHTML = dims.map(d=>`
+    <div class="bar-col">
+      <div class="bar-track">
+        <div class="bar-fill" id="bar-${d}" style="background:${TASTE_COLORS[d]};height:0%"></div>
+      </div>
+      <div class="bar-lbl">${TASTE_LABELS[d]}</div>
+    </div>`).join('');
+
+  setTimeout(()=>{
+    dims.forEach(d=>{
+      document.getElementById(`bar-${d}`).style.height = Math.round((s[d]/3)*100)+'%';
+    });
+  }, 80);
+}
+
+function buildSpeedRow(){
+  const dims = ['umami','sweet','sour','salty','bitter'];
+  const el = document.getElementById('speed-row');
+  el.innerHTML = dims.map(d=>{
+    const rt = avgRT(d);
+    const display = rt >= 99 ? '—' : rt.toFixed(1)+'s';
+    return `<div class="speed-tile">
+      <div class="speed-time" style="color:${TASTE_COLORS[d]}">${display}</div>
+      <div class="speed-name">${TASTE_LABELS[d]}</div>
+    </div>`;
+  }).join('');
+}
+
+// ── DOTS ──────────────────────────────────────────────────────────────
+function buildDots(){
+  const el = document.getElementById('card-dots');
+  el.innerHTML = DISHES.map((_,i)=>`<div class="cdot${i===0?' active':''}" id="d${i}"></div>`).join('');
+}
+function updateDots(){
+  DISHES.forEach((_,i)=>{
+    const d=document.getElementById('d'+i);
+    if(!d) return;
+    d.className='cdot'+(i<currentIdx?' done':i===currentIdx?' active':'');
+  });
+}
+
+// ── HEARTS BURST ──────────────────────────────────────────────────────
+function burstHearts(cardEl){
+  const rect = cardEl.getBoundingClientRect();
+  const cx   = rect.left + rect.width/2;
+  const cy   = rect.top  + rect.height/2;
+  const count = 7;
+  for(let i=0;i<count;i++){
+    const h = document.createElement('div');
+    h.className = 'heart-particle';
+    h.textContent = '♥';
+    h.style.cssText = `left:${cx}px;top:${cy}px;font-size:${16+Math.random()*16}px;color:#e8527a;--tx:${(Math.random()-0.5)*120}px;--ty:${-60-Math.random()*80}px;animation-delay:${Math.random()*0.15}s`;
+    document.body.appendChild(h);
+    setTimeout(()=>h.remove(), 1000);
+  }
+}
+
+// ── SEND TO BACKEND ───────────────────────────────────────────────────
+function findRestaurants(){
+  const s = computeScores();
+  const CUISINE_MAP = {umami:'japanese_pacific',sweet:'comfort_casual',sour:'world_cuisine',salty:'local_hawaiian',bitter:'modern_fusion'};
+  const dominant = Object.keys(s).filter(k=>k!=='heat').reduce((a,b)=>s[a]>=s[b]?a:b);
+  const ATM = {0:'cozy_local',1:'beach_outdoor',2:'lively_social',3:'scenic_unique'};
+  const payload = {
+    dietary:'no_restrictions', occasion: s.heat>=2 ? 'adventurous' : 'friends_group',
+    cuisine: CUISINE_MAP[dominant]||'local_hawaiian',
+    atmosphere: ATM[s.heat]||'beach_outdoor',
+    budget:2, noise_pref: s.heat>=2 ? 3 : 2,
+    island:'any', current_time: new Date().getHours(),
+  };
+  sessionStorage.setItem('ktid_v7', JSON.stringify({scores:s, version:'v7'}));
+  window.location.href='/?from=v7&payload='+encodeURIComponent(JSON.stringify(payload));
+}
+
+function shareProfile(){
+  const code = document.getElementById('ktid-code').textContent;
+  const arch = document.getElementById('arch-name').textContent;
+  const text = `${arch}\n${code}\n\nDiscover yours at kaana.app 🌺`;
+  if(navigator.share) navigator.share({title:"My Kaʻana Taste Profile",text});
+  else if(navigator.clipboard) navigator.clipboard.writeText(text).then(()=>alert('Copied! 🌺'));
+}
+
+// ── UTILS ─────────────────────────────────────────────────────────────
+function sleep(ms){ return new Promise(r=>setTimeout(r,ms)); }
+</script>
+</body>
+</html>

@@ -113,6 +113,7 @@
     .stripe-v4 { background: linear-gradient(90deg, #335c67, #e09f3e); }
     .stripe-v5 { background: linear-gradient(90deg, #1f7a8c, #f2a65a); }
     .stripe-v6 { background: linear-gradient(90deg, #7c3aed, #e8527a, #e05a2a); }
+    .stripe-v7 { background: linear-gradient(90deg, #0d7a3e, #1a9e54, #2ecc71, #1a9e54, #0d7a3e); }
 
     .card-body { padding: 24px 24px 20px; flex: 1; }
 
@@ -132,6 +133,7 @@
     .tag-v4 { color: #335c67; border-color: #335c67; }
     .tag-v5 { color: #1f7a8c; border-color: #1f7a8c; }
     .tag-v6 { color: #7c3aed; border-color: #7c3aed; }
+    .tag-v7 { color: #0d7a3e; border-color: #0d7a3e; }
 
     .card-name {
       font-size: 22px;
@@ -311,7 +313,7 @@
   <div class="logo">KA'ANA</div>
 
   <h1 class="headline">How would you like to<br/>build your Taste ID?</h1>
-  <p class="subheadline">Six different methods, same outcome. Pick whichever feels right.</p>
+  <p class="subheadline">Seven different methods, same outcome. Pick whichever feels right.</p>
 
   <div class="versions">
 
@@ -371,6 +373,66 @@
       <div class="card-footer" style="background:#111; border-top-color:#333;">
         <span class="card-footer-label" style="color:rgba(237,232,222,0.5);">Biological flavor profiling</span>
         <span class="card-cta" style="color:#7c3aed;">Try This →</span>
+      </div>
+    </a>
+
+    <!-- ── VERSION 7 — featured at top ── -->
+    <a class="version-card" href="/onboarding_v7.html"
+       style="grid-column: 1 / -1; background: #071a0f; color: #e8f5ec; border-color: #0d7a3e;">
+      <div class="card-stripe stripe-v7"></div>
+
+      <div class="preview-strip"
+           style="background: linear-gradient(135deg, #071a0f, #0d4a24, #1a9e54, #0d4a24); justify-content: center; gap: 14px;">
+        <span class="preview-item" style="font-size:26px;">🍜</span>
+        <span class="preview-item" style="font-size:26px;">🍩</span>
+        <span class="preview-item" style="font-size:26px;">🐟</span>
+        <span class="preview-item" style="font-size:26px;">🌶️</span>
+        <span class="preview-item" style="font-size:26px;">🍋</span>
+        <span class="preview-item" style="font-size:26px;">🥗</span>
+      </div>
+
+      <div class="card-body">
+        <span class="version-tag tag-v7" style="background:transparent;">Version 7 — New</span>
+        <div class="card-name" style="color:#e8f5ec;">The Market<br/>Scroll</div>
+        <p class="card-tagline" style="color:rgba(232,245,236,0.72);">
+          Swipe through 12 real dishes like a social feed. Your gut reactions — speed, hesitation, love —
+          are measured in real time to build your behavioral flavor fingerprint.
+        </p>
+
+        <div class="mechanic-list">
+          <div class="mechanic-row">
+            <span class="mechanic-icon">⚡</span>
+            <span class="mechanic-text" style="color:#e8f5ec;"><strong style="color:#e8f5ec;">Reaction time scoring</strong> — how fast you react reveals subconscious preference, not just what you say.</span>
+          </div>
+          <div class="mechanic-row">
+            <span class="mechanic-icon">🃏</span>
+            <span class="mechanic-text" style="color:#e8f5ec;"><strong style="color:#e8f5ec;">Swipe, Want, or Love</strong> — three-tier signal captures intensity, not just yes/no.</span>
+          </div>
+          <div class="mechanic-row">
+            <span class="mechanic-icon">🧠</span>
+            <span class="mechanic-text" style="color:#e8f5ec;"><strong style="color:#e8f5ec;">Behavioral profiling</strong> — the method closest to how large-scale recommendation systems are actually trained.</span>
+          </div>
+        </div>
+
+        <div class="card-stats">
+          <div class="stat">
+            <span class="stat-val" style="color:#e8f5ec;">~60 sec</span>
+            <span class="stat-label">Duration</span>
+          </div>
+          <div class="stat">
+            <span class="stat-val" style="color:#e8f5ec;">12</span>
+            <span class="stat-label">Dish cards</span>
+          </div>
+          <div class="stat">
+            <span class="stat-val" style="color:#e8f5ec;">5</span>
+            <span class="stat-label">Taste dimensions</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="card-footer" style="background:#0a2212; border-top-color:#1a4a28;">
+        <span class="card-footer-label" style="color:rgba(232,245,236,0.5);">Behavioral reaction profiling</span>
+        <span class="card-cta" style="color:#2ecc71;">Try This →</span>
       </div>
     </a>
 
@@ -670,7 +732,7 @@
     <span class="research-badge-icon">🔬</span>
     <span class="research-badge-text">
       <strong>All methods are research-backed.</strong>
-      V1 uses revealed preference theory. V2 uses conjoint analysis. V3 uses scenario-based elicitation. V4 uses layered composition. V5 uses strategic route tradeoffs. V6 uses direct biological taste mapping (the 5 basic tastes).
+      V1 uses revealed preference theory. V2 uses conjoint analysis. V3 uses scenario-based elicitation. V4 uses layered composition. V5 uses strategic route tradeoffs. V6 uses direct biological taste mapping (the 5 basic tastes). V7 uses behavioral reaction-time profiling — the same implicit signal methodology used by large-scale recommender systems.
       Each version ends with a full methodology explanation.
     </span>
   </div>

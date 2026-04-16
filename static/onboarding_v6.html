@@ -241,30 +241,16 @@
       width: 100%;
       border: 2.5px solid var(--border);
       box-shadow: var(--shadow);
-      padding: 22px 20px 18px;
+      padding: 28px 20px 22px;
       text-align: center;
       margin-bottom: 14px;
       background: white;
-      border-top-width: 7px; /* accent bar — color set by JS */
+      border-top-width: 7px;
       transition: border-top-color 0.3s;
     }
-    .taste-big-emoji { font-size: 52px; display: block; margin-bottom: 10px; }
-    .taste-name-lbl {
-      font-size: 9px;
-      font-weight: 700;
-      letter-spacing: 0.2em;
-      text-transform: uppercase;
-      color: var(--muted);
-      margin-bottom: 4px;
-    }
-    .taste-question {
-      font-size: 14px;
-      color: var(--muted);
-      margin-top: 6px;
-      line-height: 1.5;
-    }
+    .taste-big-emoji { font-size: 64px; display: block; margin-bottom: 12px; line-height: 1; }
 
-    /* Food examples row */
+    /* Food examples row — emoji + 1 word only */
     .food-row {
       display: flex;
       gap: 10px;
@@ -275,51 +261,58 @@
       flex: 1;
       border: 2px solid var(--border);
       box-shadow: 3px 3px 0 var(--border);
-      padding: 12px 8px;
+      padding: 14px 6px 12px;
       text-align: center;
       background: var(--bg);
     }
-    .food-icon  { font-size: 26px; display: block; margin-bottom: 6px; }
-    .food-name  { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; line-height: 1.3; }
-    .food-note  { font-size: 10px; color: var(--muted); margin-top: 3px; line-height: 1.3; }
+    .food-icon { font-size: 30px; display: block; margin-bottom: 6px; }
+    .food-name { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; line-height: 1.3; }
 
-    /* Intensity buttons */
-    .intensity-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 10px;
+    /* Intensity — single horizontal row, visual only */
+    .intensity-row {
+      display: flex;
+      gap: 8px;
       width: 100%;
       margin-bottom: 16px;
     }
     .ibtn {
+      flex: 1;
       border: 2.5px solid var(--border);
-      padding: 15px 10px;
+      padding: 18px 4px 14px;
       text-align: center;
       cursor: pointer;
       background: var(--bg);
       box-shadow: 3px 3px 0 var(--border);
       transition: transform 0.1s, box-shadow 0.1s, background 0.18s, color 0.18s;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
     }
-    .ibtn:hover { background: rgba(26,21,16,0.06); }
+    .ibtn:hover { background: rgba(26,21,16,0.07); }
     .ibtn.selected {
       background: var(--current-taste-color, var(--accent));
       color: white;
       transform: translate(1px,1px);
       box-shadow: 2px 2px 0 var(--border);
     }
-    .ibtn-label {
-      font-size: 12px;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 0.06em;
-      display: block;
+    /* Dot pip indicators — grow with intensity */
+    .ibtn-pips {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      align-items: center;
     }
-    .ibtn-dots {
-      font-size: 15px;
-      margin-top: 4px;
-      letter-spacing: 3px;
-      color: inherit;
+    .pip {
+      border-radius: 50%;
+      background: currentColor;
+      opacity: 0.25;
+      transition: opacity 0.15s;
     }
+    .ibtn.selected .pip { opacity: 1; }
+    /* Each button has a different number of filled pips */
+    .ibtn[data-val="0"] .pip            { opacity: 0.15; }
+    .ibtn[data-val="0"].selected .pip   { opacity: 0.7; }
 
     /* ─── TEXTURE SCREEN ─────────────────────────────────────────── */
     #screen-texture { gap: 0; }
@@ -620,11 +613,10 @@
   </div>
 
   <div>
-    <div class="intro-kicker" style="margin-bottom:10px;">Taste Lab · Version 6</div>
     <h1>Map Your<br/>Palate.</h1>
   </div>
 
-  <p class="intro-sub">Five tastes. Ninety seconds.<br/>Your flavor identity, decoded.</p>
+  <p class="intro-sub">5 tastes &nbsp;·&nbsp; 90 seconds</p>
 
   <button class="btn" onclick="beginMapping()" style="min-width:210px;">Begin Mapping →</button>
 
@@ -648,33 +640,56 @@
     <span class="progress-label" id="taste-step-lbl">1 / 5</span>
   </div>
 
-  <!-- All taste content lives here — fades between tastes -->
+  <!-- Hint shown only on first taste -->
+  <div id="taste-hint" style="width:100%;max-width:440px;text-align:center;margin-bottom:10px;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:0.12em;color:var(--muted);">
+    Tap how much you love each taste ↓
+  </div>
+
+  <!-- All taste content — fades between tastes -->
   <div id="taste-content" style="width:100%;max-width:440px;display:flex;flex-direction:column;align-items:center;">
+
+    <!-- Big emoji + taste name only -->
     <div class="taste-hero" id="taste-hero">
       <span class="taste-big-emoji" id="taste-emoji">🍜</span>
-      <div class="taste-name-lbl" id="taste-name-lbl">Umami</div>
-      <h2 id="taste-h2" style="margin-bottom:4px;">Umami</h2>
-      <p class="taste-question" id="taste-question">How much do you crave deep, savory richness?</p>
+      <h2 id="taste-h2">Umami</h2>
     </div>
 
+    <!-- 3 food examples: emoji + 1 word -->
     <div class="food-row" id="food-row"><!-- filled by JS --></div>
 
-    <div class="intensity-grid" id="intensity-grid">
+    <!-- 4 intensity buttons in one row — purely visual -->
+    <div class="intensity-row">
       <button class="ibtn" data-val="0" onclick="pickIntensity(0, this)">
-        <span class="ibtn-label">Not my thing</span>
-        <div class="ibtn-dots">○○○</div>
+        <div class="ibtn-pips">
+          <div class="pip" style="width:10px;height:10px;"></div>
+          <div class="pip" style="width:10px;height:10px;opacity:0.08;"></div>
+          <div class="pip" style="width:10px;height:10px;opacity:0.08;"></div>
+        </div>
+        <span style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;opacity:0.6;">Nope</span>
       </button>
       <button class="ibtn" data-val="1" onclick="pickIntensity(1, this)">
-        <span class="ibtn-label">Sometimes</span>
-        <div class="ibtn-dots">●○○</div>
+        <div class="ibtn-pips">
+          <div class="pip" style="width:12px;height:12px;"></div>
+          <div class="pip" style="width:12px;height:12px;"></div>
+          <div class="pip" style="width:12px;height:12px;opacity:0.08;"></div>
+        </div>
+        <span style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;opacity:0.6;">A bit</span>
       </button>
       <button class="ibtn" data-val="2" onclick="pickIntensity(2, this)">
-        <span class="ibtn-label">Love it</span>
-        <div class="ibtn-dots">●●○</div>
+        <div class="ibtn-pips">
+          <div class="pip" style="width:14px;height:14px;"></div>
+          <div class="pip" style="width:14px;height:14px;"></div>
+          <div class="pip" style="width:14px;height:14px;"></div>
+        </div>
+        <span style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;opacity:0.6;">Love it</span>
       </button>
       <button class="ibtn" data-val="3" onclick="pickIntensity(3, this)">
-        <span class="ibtn-label">Obsessed</span>
-        <div class="ibtn-dots">●●●</div>
+        <div class="ibtn-pips">
+          <div class="pip" style="width:18px;height:18px;"></div>
+          <div class="pip" style="width:18px;height:18px;"></div>
+          <div class="pip" style="width:18px;height:18px;"></div>
+        </div>
+        <span style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;opacity:0.6;">Obsessed</span>
       </button>
     </div>
   </div>
@@ -699,31 +714,25 @@
   </div>
 
   <div class="section-header">
-    <div class="section-kicker">Mouthfeel</div>
-    <h2>How do you<br/>like to eat?</h2>
-    <p style="font-size:14px;color:var(--muted);margin-top:8px;line-height:1.5;">Texture shapes the whole experience —<br/>sometimes more than flavor.</p>
+    <h2>Pick your<br/>texture.</h2>
   </div>
 
   <div class="texture-grid">
     <div class="texture-card" onclick="pickTexture('crispy', this)">
       <span class="tex-icon">🥐</span>
       <div class="tex-name">Crispy</div>
-      <div class="tex-desc">Crunchy, toasted, crackling — contrast with every bite</div>
     </div>
     <div class="texture-card" onclick="pickTexture('soft', this)">
       <span class="tex-icon">🍚</span>
-      <div class="tex-name">Soft &amp; Tender</div>
-      <div class="tex-desc">Yielding, pillowy, melt-in-mouth satisfaction</div>
+      <div class="tex-name">Soft</div>
     </div>
     <div class="texture-card" onclick="pickTexture('creamy', this)">
       <span class="tex-icon">🥑</span>
       <div class="tex-name">Creamy</div>
-      <div class="tex-desc">Smooth, rich, velvety — coats the palate</div>
     </div>
     <div class="texture-card" onclick="pickTexture('mixed', this)">
       <span class="tex-icon">🌮</span>
-      <div class="tex-name">Contrasts</div>
-      <div class="tex-desc">Layers of texture — depends on the dish, the mood</div>
+      <div class="tex-name">Mixed</div>
     </div>
   </div>
 </div>
@@ -747,7 +756,6 @@
   </div>
 
   <div class="section-header" style="margin-top:12px;">
-    <div class="section-kicker">Spice &amp; Heat</div>
     <h2>How spicy<br/>do you go?</h2>
   </div>
 
@@ -864,49 +872,41 @@ const TASTES = [
     subtitle: 'Savory depth — broths, miso, soy, aged and fermented flavors.',
     question: 'How much do you crave deep, savory richness?',
     foods: [
-      { icon:'🐟', name:'Misoyaki Butterfish', note:'Caramelized miso glaze, silky' },
-      { icon:'🍜', name:'Tonkotsu Ramen',      note:'Rich 12-hour pork broth' },
-      { icon:'🐠', name:'Shoyu Poke',          note:'Soy-marinated ahi, sesame' },
+      { icon:'🐟', short:'Butterfish' },
+      { icon:'🍜', short:'Ramen'      },
+      { icon:'🐠', short:'Poke'       },
     ]
   },
   {
     key: 'sweet', name: 'SWEET', emoji: '🍯', color: '#e8527a',
-    subtitle: 'Honey, tropical fruit, caramel, coconut, dessert warmth.',
-    question: 'How much do you love sweetness in your food?',
     foods: [
-      { icon:'🍩', name:'Malasadas',  note:'Hot Portuguese donuts, sugar-rolled' },
-      { icon:'🫐', name:'Acai Bowl',  note:'Tropical berries, drizzled honey' },
-      { icon:'🥥', name:'Haupia',     note:'Coconut cream pudding, silky sweet' },
+      { icon:'🍩', short:'Malasadas' },
+      { icon:'🫐', short:'Acai Bowl' },
+      { icon:'🥥', short:'Haupia'    },
     ]
   },
   {
     key: 'sour', name: 'SOUR', emoji: '🍋', color: '#7ab510',
-    subtitle: 'Citrus, lilikoi, vinegar, ferment — bright and tangy.',
-    question: 'How much do you love bright, tangy, acidic flavors?',
     foods: [
-      { icon:'🍋', name:'Lilikoi Malasadas', note:'Passion fruit curd, sharp tang' },
-      { icon:'🌿', name:'Green Papaya Salad',note:'Lime, chili, vinegar dressing' },
-      { icon:'🍊', name:'Ceviche Poke',      note:'Citrus-cured fish, bright lift' },
+      { icon:'🍋', short:'Lilikoi'  },
+      { icon:'🌿', short:'Papaya'   },
+      { icon:'🍊', short:'Ceviche'  },
     ]
   },
   {
     key: 'salty', name: 'SALTY', emoji: '🧂', color: '#2e7fd4',
-    subtitle: 'Sea salt, soy, miso crust, cured fish — oceanic and mineral.',
-    question: 'How much do you love salty, briny, mineral flavors?',
     foods: [
-      { icon:'🐷', name:'Kalua Pig',     note:'Slow-smoked, sea-salted, tender' },
-      { icon:'🍗', name:'Shoyu Chicken', note:'Caramelized, salty-sweet glaze' },
-      { icon:'🥡', name:'Saimin',        note:'Clear broth, fish cake, sea-salt' },
+      { icon:'🐷', short:'Kalua Pig' },
+      { icon:'🍗', short:'Shoyu'     },
+      { icon:'🥡', short:'Saimin'    },
     ]
   },
   {
     key: 'bitter', name: 'BITTER', emoji: '☕', color: '#3d7a4a',
-    subtitle: 'Coffee, dark chocolate, bitter greens, hops, tonic.',
-    question: 'Do you appreciate bitter, complex, grown-up flavors?',
     foods: [
-      { icon:'☕', name:'Kona Dark Roast',   note:'Single-origin, bold, earthy' },
-      { icon:'🍫', name:'Dark Choc Haupia',  note:'Bittersweet coconut parfait' },
-      { icon:'🍺', name:'Pacific IPA',       note:'Floral hops, lasting bitterness' },
+      { icon:'☕', short:'Kona Coffee' },
+      { icon:'🍫', short:'Dark Choc'   },
+      { icon:'🍺', short:'IPA'         },
     ]
   },
 ];
@@ -1003,7 +1003,10 @@ function beginMapping() {
 function renderTaste(idx) {
   const t = TASTES[idx];
 
-  // Update step dots (5 taste + texture + heat = 7 total)
+  // Hide hint after first taste
+  if (idx > 0) document.getElementById('taste-hint').style.display = 'none';
+
+  // Step dots
   const dotsEl = document.getElementById('step-dots-taste');
   dotsEl.innerHTML = TASTES.map((_,i)=>{
     let c = 'dot';
@@ -1015,24 +1018,21 @@ function renderTaste(idx) {
   // Progress bar
   const pct = (idx / TASTES.length) * 88;
   document.getElementById('taste-progress').style.width = pct + '%';
-  document.getElementById('taste-step-lbl').textContent = `${idx+1} / ${TASTES.length}`;
+  document.getElementById('taste-step-lbl').textContent = `${idx+1} / 5`;
 
-  // Hero block
+  // Hero — emoji + name only
   document.getElementById('taste-emoji').textContent = t.emoji;
-  document.getElementById('taste-name-lbl').textContent = t.subtitle;
   document.getElementById('taste-h2').textContent = t.name;
-  document.getElementById('taste-question').textContent = t.question;
   document.getElementById('taste-hero').style.borderTopColor = t.color;
 
   // CSS custom property for selected button colour
   document.documentElement.style.setProperty('--current-taste-color', t.color);
 
-  // Food tiles
+  // Food tiles — emoji + 1 word, no description
   document.getElementById('food-row').innerHTML = t.foods.map(f=>`
     <div class="food-tile">
       <span class="food-icon">${f.icon}</span>
-      <div class="food-name">${f.name}</div>
-      <div class="food-note">${f.note}</div>
+      <div class="food-name">${f.short}</div>
     </div>`).join('');
 
   // Reset buttons
